@@ -1,0 +1,3 @@
+[submodule "plyhandler/get_surfacemap_from_ply"]
+	path = plyhandler/get_surfacemap_from_ply
+	url = /home/hfechner/Projects/get_surfacemap_from_ply
