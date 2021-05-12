@@ -10,6 +10,7 @@ except KeyError:
     sys.path.insert( 0, os.getcwd() )
 import unittest
 import importlib.resources
+import tempfile
 import bpy
 import my_io_mesh_ply as main
 from my_io_mesh_ply import plyhandler
@@ -30,7 +31,11 @@ class test_blender_plyimporter( unittest.TestCase ):
         with importlib.resources.path( testdirectory1, "tmp.ply" ) as filepath:
             logger.critical( filepath )
             bpy.ops.import_mesh.ply_with_border( files=[{"name":str(filepath)}])
-        pass
+        objname = "tmp"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            filepath = os.path.join( tmpdir, "tmpfile.ply" )
+            bpy.ops.export_mesh.ply_with_border( filepath = filepath )
+
 
 
     def tearDown( self ):
