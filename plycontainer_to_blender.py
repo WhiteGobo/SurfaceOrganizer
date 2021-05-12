@@ -1,5 +1,4 @@
-import bpy.path
-import bpy.data
+import bpy
 
 import itertools
 from .plyhandler.get_surfacemap_from_ply import load_ply_obj_from_filename
@@ -11,7 +10,7 @@ def load_ply( filepath, collection, view_layer ):
     """
     #filename = "/home/hfechner/tmp.ply"
     #filename = "/home/hfechner/meshfortests.ply"
-    ply_name = bpy.path.display_name_from_filepath( filepath )
+    ply_name = bpypath.display_name_from_filepath( filepath )
     meshname = ply_name
     objectname = ply_name
 
