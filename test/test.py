@@ -1,16 +1,26 @@
 import os
 import sys
-if "TESTSCRIPTS" in os.environ.keys():
+try:
     sys.path.insert( 0, os.environ["TESTSCRIPTS"] )
-else:
+except KeyError:
+    sys.path.insert( 0, os.getcwd() )
+try:
+    sys.path.insert( 0, os.environ["TESTMODULE"] )
+except KeyError:
     sys.path.insert( 0, os.getcwd() )
 import unittest
 import importlib.resources
 import bpy
+import my_io_mesh_ply as main
 
 class test_blender_plyimporter( unittest.TestCase ):
+    def setUp( self ):
+        pass
     def test_load_and_save_ascii( self ):
         #with importlib.resources.path()
+        pass
+
+    def tearDown( self ):
         pass
 
 
