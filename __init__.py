@@ -113,11 +113,11 @@ class MyExportPLY(bpy.types.Operator, ExportHelper):
         description="Export using ASCII file format, otherwise use binary",
         default=True,
     )
-    #use_selection: BoolProperty(
-    #    name="Selection Only",
-    #    description="Export selected objects only",
-    #    default=True,
-    #)
+    use_selection: BoolProperty(
+        name="Selection Only",
+        description="Export selected objects only",
+        default=True,
+    )
     #use_mesh_modifiers: BoolProperty(
     #    name="Apply Modifiers",
     #    description="Apply Modifiers to the exported mesh",
@@ -133,13 +133,12 @@ class MyExportPLY(bpy.types.Operator, ExportHelper):
     def execute(self, context):
         from mathutils import Matrix
         #from . import export_ply
-        #from . import blender_to_plycontainer as export_ply
+        from . import blender_to_plycontainer as export_ply
 
         context.window.cursor_set('WAIT')
 
-        needkeywords = ( "filepath", "use_ascii", "use_selection", \
-                        "use_mesh_modifiers", "use_normals", "use_uv_coords", \
-                        "use_colors", "global_matrix" )
+        needkeywords = ( "filepath", "use_ascii", "use_mesh_modifiers" )
+                        #"use_normals", "use_uv_coords", "use_colors" )
         keywords = { a:b for a, b in self.as_keywords().items() \
                         if a in needkeywords }
         global_matrix = axis_conversion(
@@ -148,8 +147,16 @@ class MyExportPLY(bpy.types.Operator, ExportHelper):
         ).to_4x4() @ Matrix.Scale(self.global_scale, 4)
         keywords["global_matrix"] = global_matrix
 
-        print( keywords )
-        #export_ply.save( context, **keywords )
+        if self.use_selection:
+            keywords["objects"] = context.selected_objects
+        else:
+            keywords["objects"] = context.scene.objects
+
+        import time
+        t = time.time()
+        export_ply.save( **keywords )
+        logger.info("\nSuccessfully exported %r in %.3f sec" \
+                                % (keywords["filepath"], time.time() - t))
 
         context.window.cursor_set('DEFAULT')
 
