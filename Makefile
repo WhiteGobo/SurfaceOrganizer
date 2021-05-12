@@ -14,7 +14,8 @@ blenderpackagefiles = \
 default: my_io_mesh_ply.zip
 
 my_io_mesh_ply.zip: $(blenderpackagefiles)
-	$(ZIP) $(ZIP_ARGS) $@ $^
+	-rm $@
+	cd ..; $(ZIP) $(ZIP_ARGS) $(addprefix my_io_mesh_ply/, $@) $(addprefix my_io_mesh_ply/, $^)
 
 .PHONY: test
 test: test/test.py test/test.blend
@@ -25,3 +26,4 @@ test: test/test.py test/test.blend
 
 clean:
 	-rm my_io_mesh_ply.zip
+	-rm -r __pycache__
