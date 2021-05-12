@@ -31,11 +31,15 @@ class test_blender_plyimporter( unittest.TestCase ):
         with importlib.resources.path( testdirectory1, "tmp.ply" ) as filepath:
             logger.critical( filepath )
             bpy.ops.import_mesh.ply_with_border( files=[{"name":str(filepath)}])
+
         objname = "tmp"
+        newobj = bpy.data.objects[ -1 ] #last created object
         with tempfile.TemporaryDirectory() as tmpdir:
             filepath = os.path.join( tmpdir, "tmpfile.ply" )
-            bpy.ops.export_mesh.ply_with_border( filepath = filepath )
-
+            override = { "selected_objects":[newobj] }
+            bpy.ops.export_mesh.ply_with_border( override, \
+                                                filepath = filepath, \
+                                                use_selection = True )
 
 
     def tearDown( self ):
