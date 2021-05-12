@@ -57,7 +57,7 @@ logger = logging.getLogger( __name__ )
 
 class MyImportPLY(bpy.types.Operator, ImportHelper):
     """Load a PLY geometry file"""
-    bl_idname = "myimport_mesh_with_border.ply"
+    bl_idname = "import_mesh.ply_with_border"
     bl_label = "myImport PLY with border"
     bl_options = {'UNDO'}
 
@@ -88,12 +88,12 @@ class MyImportPLY(bpy.types.Operator, ImportHelper):
         paths = [ os.path.join(self.directory, name.name) \
                                     for name in self.files ]
         import time
-        t = time.time()
 
         for path in paths:
+            t = time.time()
             import_ply.load_ply( path, context.collection, context.view_layer )
-        logger.info("\nSuccessfully imported %r in %.3f sec" \
-                        % (filepath, time.time() - t))
+            logger.info("\nSuccessfully imported %r in %.3f sec" \
+                                            % (path, time.time() - t))
 
         context.window.cursor_set('DEFAULT')
 
