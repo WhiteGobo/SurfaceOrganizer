@@ -10,20 +10,21 @@ def load_ply( filepath, collection, view_layer ):
     """
     #filename = "/home/hfechner/tmp.ply"
     #filename = "/home/hfechner/meshfortests.ply"
-    ply_name = bpypath.display_name_from_filepath( filepath )
+    ply_name = bpy.path.display_name_from_filepath( filepath )
     meshname = ply_name
     objectname = ply_name
 
     vertexlist, faces = load_meshdata_from_ply( filepath )
 
-    generate_blender_object( meshname, objectname, blender_obj_info, \
+    generate_blender_object( meshname, objectname, vertexlist, faces, \
                                                     collection, view_layer )
     return {'FINISHED'}
 
 def load_meshdata_from_ply( filepath ):
     plyobj = load_ply_obj_from_filename( filepath )
-    vertexpositions = myobj["vertex"].get_filtered_data( "x", "y", "z" )
-    faceindices = myobj["face"].get_filtered_data( "indices" )
+    vertexpositions = plyobj["vertex"].get_filtered_data( "x", "y", "z" )
+    faceindices = plyobj["face"].get_filtered_data( "vertex_indices" )
+    faceindices = [ f[0] for f in faceindices ]
     return vertexpositions, faceindices
 
 
@@ -49,9 +50,9 @@ def generate_blender_object( meshname, objectname, vertices_list, faces, \
 
 
 def generate_mesh( vertices_list, faces, meshname ):
-    mesh = bpy.data.meshes.new( name=ply_name )
+    mesh = bpy.data.meshes.new( name=meshname )
     edgelist = [] # if faces are given no edges need to be provided
-    mesh.from_pydata( vertices_list, faces, edgelist )
+    mesh.from_pydata( vertices_list, edgelist, faces )
     #mesh.update()
     mesh.validate()
 
