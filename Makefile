@@ -21,7 +21,7 @@ test: test/test.py test/test.blend
 	env TESTSCRIPTS=$(abspath test/) TESTMODULE=$(abspath ../) \
 		blender -b $(word 2, $^) --python $(word 1, $^)
 
-.PHONY: clear
+.PHONY: clean
 
-clear:
+clean:
 	-rm my_io_mesh_ply.zip
