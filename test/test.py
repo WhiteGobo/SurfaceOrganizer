@@ -15,13 +15,13 @@ import my_io_mesh_ply as main
 
 class test_blender_plyimporter( unittest.TestCase ):
     def setUp( self ):
-        pass
+        main.register()
     def test_load_and_save_ascii( self ):
         #with importlib.resources.path()
         pass
 
     def tearDown( self ):
-        pass
+        main.unregister()
 
 
 if __name__=="__main__":
