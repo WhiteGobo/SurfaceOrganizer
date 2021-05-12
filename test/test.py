@@ -29,6 +29,7 @@ class test_blender_plyimporter( unittest.TestCase ):
         override = {}
         with importlib.resources.path( testdirectory1, "tmp.ply" ) as filepath:
             logger.critical( filepath )
+            bpy.ops.import_mesh.ply_with_border( files=[{"name":str(filepath)}] )
         pass
 
 
