@@ -20,25 +20,22 @@
 
 bl_info = {
     "name": "Stanford PLY format for createcloth",
-    "author": "Bruce Merry, Campbell Barton", "Bastien Montagne"
-    "version": (2, 1, 0),
+    "author": "Richard Fechner"
+    "version": (0, 0, 1),
     "blender": (2, 90, 0),
     "location": "File > Import/Export",
-    "description": "Import-Export PLY mesh data with UVs and vertex colors",
+    "description": "Import-Export PLY mesh data",
     #"doc_url": "{BLENDER_MANUAL_URL}/addons/import_export/mesh_ply.html",
     #"support": 'OFFICIAL',
     "category": "Import-Export",
 }
 
-# Copyright (C) 2004, 2005: Bruce Merry, bmerry@cs.uct.ac.za
-# Contributors: Bruce Merry, Campbell Barton
-
-if "bpy" in locals():
-    import importlib
-    if "export_ply" in locals():
-        importlib.reload(export_ply)
-    if "import_ply" in locals():
-        importlib.reload(import_ply)
+#if "bpy" in locals():
+#    import importlib
+#    if "export_ply" in locals():
+#        importlib.reload(export_ply)
+#    if "import_ply" in locals():
+#        importlib.reload(import_ply)
 
 
 import bpy
@@ -54,7 +51,8 @@ from bpy_extras.io_utils import (
     axis_conversion,
     orientation_helper,
 )
-
+import logging
+logger = logging.getLogger( __name__ )
 
 class MyImportPLY(bpy.types.Operator, ImportHelper):
     """Load a PLY geometry file"""
@@ -68,16 +66,15 @@ class MyImportPLY(bpy.types.Operator, ImportHelper):
         type=bpy.types.OperatorFileListElement,
     )
 
-    # Hide opertator properties, rest of this is managed in C. See WM_operator_properties_filesel().
-    hide_props_region: BoolProperty(
-        name="Hide Operator Properties",
-        description="Collapse the region displaying the operator settings",
-        default=True,
-    )
+    ## Hide opertator properties, rest of this is managed in C. See WM_operator_properties_filesel().
+    #hide_props_region: BoolProperty(
+    #    name="Hide Operator Properties",
+    #    description="Collapse the region displaying the operator settings",
+    #    default=True,
+    #)
 
     directory: StringProperty()
 
-    filename_ext = ".ply"
     filter_glob: StringProperty(default="*.ply", options={'HIDDEN'})
 
     def execute(self, context):
@@ -87,16 +84,15 @@ class MyImportPLY(bpy.types.Operator, ImportHelper):
 
         context.window.cursor_set('WAIT')
 
-        paths = [
-            os.path.join(self.directory, name.name)
-            for name in self.files
-        ]
-
-        if not paths:
-            paths.append(self.filepath)
+        paths = [ os.path.join(self.directory, name.name) \
+                                    for name in self.files ]
+        import time
+        t = time.time()
 
         for path in paths:
-            import_ply.load(self, context, path)
+            import_ply.load_ply( path, context.collection, context.view_layer )
+        logger.info("\nSuccessfully imported %r in %.3f sec" \
+                        % (filepath, time.time() - t))
 
         context.window.cursor_set('DEFAULT')
 
@@ -109,7 +105,6 @@ class MyExportPLY(bpy.types.Operator, ExportHelper):
     bl_label = "Export PLY"
     bl_description = "Export as a Stanford PLY with normals, vertex colors and texture coordinates"
 
-    filename_ext = ".ply"
     filter_glob: StringProperty(default="*.ply", options={'HIDDEN'})
 
     use_ascii: BoolProperty(
@@ -117,34 +112,16 @@ class MyExportPLY(bpy.types.Operator, ExportHelper):
         description="Export using ASCII file format, otherwise use binary",
         default=True,
     )
-    use_selection: BoolProperty(
-        name="Selection Only",
-        description="Export selected objects only",
-        default=True,
-    )
+    #use_selection: BoolProperty(
+    #    name="Selection Only",
+    #    description="Export selected objects only",
+    #    default=True,
+    #)
     #use_mesh_modifiers: BoolProperty(
     #    name="Apply Modifiers",
     #    description="Apply Modifiers to the exported mesh",
     #    default=True,
     #)
-    use_normals: BoolProperty(
-        name="Normals",
-        description=(
-            "Export Normals for smooth and hard shaded faces "
-            "(hard shaded faces will be exported as individual faces)"
-        ),
-        default=True,
-    )
-    use_uv_coords: BoolProperty(
-        name="UVs",
-        description="Export the active UV layer",
-        default=True,
-    )
-    use_colors: BoolProperty(
-        name="Vertex Colors",
-        description="Export the active vertex color layer",
-        default=True,
-    )
     global_scale: FloatProperty(
         name="Scale",
         min=0.01,
@@ -192,29 +169,6 @@ class MyExportPLY(bpy.types.Operator, ExportHelper):
         col.prop(operator, "use_ascii")
 
 
-class PLY_PT_export_include(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Include"
-    bl_parent_id = "FILE_PT_operator"
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_MESH_OT_ply"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        layout.prop(operator, "use_selection")
-
 
 class PLY_PT_export_transform(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -242,47 +196,19 @@ class PLY_PT_export_transform(bpy.types.Panel):
         layout.prop(operator, "global_scale")
 
 
-class PLY_PT_export_geometry(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Geometry"
-    bl_parent_id = "FILE_PT_operator"
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_MESH_OT_ply"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        #layout.prop(operator, "use_mesh_modifiers")
-        layout.prop(operator, "use_normals")
-        layout.prop(operator, "use_uv_coords")
-        layout.prop(operator, "use_colors")
-
 
 def menu_func_import(self, context):
-    self.layout.operator(MyImportPLY.bl_idname, text="Stanford with border(.ply)")
+    self.layout.operator(MyImportPLY.bl_idname, text="Brubru Stanford with border(.ply)")
 
 
 def menu_func_export(self, context):
-    self.layout.operator(MyExportPLY.bl_idname, text="Stanford with border(.ply)")
+    self.layout.operator(MyExportPLY.bl_idname, text="Brubru Stanford with border(.ply)")
 
 
 classes = (
     MyImportPLY,
     MyExportPLY,
-    PLY_PT_export_include,
     PLY_PT_export_transform,
-    PLY_PT_export_geometry,
 )
 
 
