@@ -20,7 +20,7 @@
 
 bl_info = {
     "name": "Stanford PLY format for createcloth",
-    "author": "Richard Fechner"
+    "author": "Richard Fechner",
     "version": (0, 0, 1),
     "blender": (2, 90, 0),
     "location": "File > Import/Export",
@@ -52,6 +52,7 @@ from bpy_extras.io_utils import (
     orientation_helper,
 )
 import logging
+from . import plycontainer_to_blender
 logger = logging.getLogger( __name__ )
 
 class MyImportPLY(bpy.types.Operator, ImportHelper):
