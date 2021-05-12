@@ -102,9 +102,9 @@ class MyImportPLY(bpy.types.Operator, ImportHelper):
 
 @orientation_helper(axis_forward='Y', axis_up='Z')
 class MyExportPLY(bpy.types.Operator, ExportHelper):
-    bl_idname = "myexport_mesh.ply"
+    bl_idname = "export_mesh.ply_with_border"
     bl_label = "myExport PLY"
-    bl_description = "Export as a Stanford PLY with normals, vertex colors and texture coordinates"
+    bl_description = "Export as a Stanford PLY"
 
     filter_glob: StringProperty(default="*.ply", options={'HIDDEN'})
 
@@ -133,26 +133,23 @@ class MyExportPLY(bpy.types.Operator, ExportHelper):
     def execute(self, context):
         from mathutils import Matrix
         #from . import export_ply
-        from . import blender_to_plycontainer as export_ply
+        #from . import blender_to_plycontainer as export_ply
 
         context.window.cursor_set('WAIT')
 
-        keywords = self.as_keywords(
-            ignore=(
-                "axis_forward",
-                "axis_up",
-                "global_scale",
-                "check_existing",
-                "filter_glob",
-            )
-        )
+        needkeywords = ( "filepath", "use_ascii", "use_selection", \
+                        "use_mesh_modifiers", "use_normals", "use_uv_coords", \
+                        "use_colors", "global_matrix" )
+        keywords = { a:b for a, b in self.as_keywords().items() \
+                        if a in needkeywords }
         global_matrix = axis_conversion(
             to_forward=self.axis_forward,
             to_up=self.axis_up,
         ).to_4x4() @ Matrix.Scale(self.global_scale, 4)
         keywords["global_matrix"] = global_matrix
 
-        export_ply.save(context, **keywords)
+        print( keywords )
+        #export_ply.save( context, **keywords )
 
         context.window.cursor_set('DEFAULT')
 
