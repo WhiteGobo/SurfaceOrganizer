@@ -107,6 +107,7 @@ class MyExportPLY(bpy.types.Operator, ExportHelper):
     bl_description = "Export as a Stanford PLY"
 
     filter_glob: StringProperty(default="*.ply", options={'HIDDEN'})
+    filename_ext = ".ply" #needed for Blender ExportHelper
 
     use_ascii: BoolProperty(
         name="ASCII",
