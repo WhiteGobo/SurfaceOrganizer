@@ -1,8 +1,7 @@
 import bpy
 import bmesh
 import numpy as np
-from .datacontainer import plycontainer_from_arrays
-from .myexport_ply import export_plyfile
+from .plyhandler.get_surfacemap_from_ply import plycontainer_from_arrays, export_plyfile
 import itertools as it
 
 def save( objects, filepath, global_matrix, use_ascii ):
