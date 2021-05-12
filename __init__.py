@@ -24,7 +24,7 @@ bl_info = {
     "version": (0, 0, 1),
     "blender": (2, 90, 0),
     "location": "File > Import/Export",
-    "description": "Import-Export PLY mesh data",
+    "description": "Import-Export PLY mesh data for createcloth",
     #"doc_url": "{BLENDER_MANUAL_URL}/addons/import_export/mesh_ply.html",
     #"support": 'OFFICIAL',
     "category": "Import-Export",
@@ -57,8 +57,8 @@ logger = logging.getLogger( __name__ )
 
 class MyImportPLY(bpy.types.Operator, ImportHelper):
     """Load a PLY geometry file"""
-    bl_idname = "import_mesh_with_border.ply"
-    bl_label = "Import PLY with border"
+    bl_idname = "myimport_mesh_with_border.ply"
+    bl_label = "myImport PLY with border"
     bl_options = {'UNDO'}
 
     files: CollectionProperty(
@@ -102,8 +102,8 @@ class MyImportPLY(bpy.types.Operator, ImportHelper):
 
 @orientation_helper(axis_forward='Y', axis_up='Z')
 class MyExportPLY(bpy.types.Operator, ExportHelper):
-    bl_idname = "export_mesh.ply"
-    bl_label = "Export PLY"
+    bl_idname = "myexport_mesh.ply"
+    bl_label = "myExport PLY"
     bl_description = "Export as a Stanford PLY with normals, vertex colors and texture coordinates"
 
     filter_glob: StringProperty(default="*.ply", options={'HIDDEN'})
@@ -174,7 +174,7 @@ class MyExportPLY(bpy.types.Operator, ExportHelper):
 class PLY_PT_export_transform(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
-    bl_label = "Transform"
+    bl_label = "myTransform"
     bl_parent_id = "FILE_PT_operator"
 
     @classmethod
