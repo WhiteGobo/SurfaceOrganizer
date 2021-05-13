@@ -24,7 +24,7 @@ class test_blender_plyimporter( unittest.TestCase ):
         main.register()
 
 
-    def test_load_and_save_ascii( self ):
+    def test_load_ascii( self ):
         import my_io_mesh_ply.plyhandler.get_surfacemap_from_ply.tests \
                     as testdirectory1
         override = {}
@@ -34,6 +34,10 @@ class test_blender_plyimporter( unittest.TestCase ):
 
         objname = "tmp"
         newobj = bpy.data.objects[ -1 ] #last created object
+
+
+    def test_save_ascii( self ):
+        newobj = bpy.data.objects["PreparedWithBorderCube"] 
         with tempfile.TemporaryDirectory() as tmpdir:
             filepath = os.path.join( tmpdir, "tmpfile.ply" )
             override = { "selected_objects":[newobj] }
@@ -44,6 +48,7 @@ class test_blender_plyimporter( unittest.TestCase ):
 
     def tearDown( self ):
         main.unregister()
+
 
 
 if __name__=="__main__":
