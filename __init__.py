@@ -148,10 +148,7 @@ class MyExportPLY(bpy.types.Operator, ExportHelper):
         ).to_4x4() @ Matrix.Scale(self.global_scale, 4)
         keywords["global_matrix"] = global_matrix
 
-        if self.use_selection:
-            keywords["objects"] = context.selected_objects
-        else:
-            keywords["objects"] = context.scene.objects
+        keywords["object"] = list(context.selected_objects)[0]
 
         import time
         t = time.time()
@@ -174,6 +171,13 @@ class MyExportPLY(bpy.types.Operator, ExportHelper):
         col = layout.column(heading="Format")
         col.prop(operator, "use_ascii")
 
+    @classmethod
+    def poll( self, context ):
+        conditions = ( \
+                #context.space_data is not None, \
+                len( context.selected_objects ) == 1, \
+                )
+        return all( conditions )
 
 
 class PLY_PT_export_transform(bpy.types.Panel):
