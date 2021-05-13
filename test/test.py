@@ -34,7 +34,12 @@ class test_blender_plyimporter( unittest.TestCase ):
 
         objname = "tmp"
         newobj = bpy.data.objects[ -1 ] #last created object
-
+        with tempfile.TemporaryDirectory() as tmpdir:
+            filepath = os.path.join( tmpdir, "tmpfile.ply" )
+            override = { "selected_objects":[newobj] }
+            bpy.ops.export_mesh.ply_with_border( override, \
+                                                filepath = filepath, \
+                                                use_selection = True )
 
     def test_save_ascii( self ):
         newobj = bpy.data.objects["PreparedWithBorderCube"] 
