@@ -14,10 +14,12 @@ def load_ply( filepath, collection, view_layer ):
     meshname = ply_name
     objectname = ply_name
 
-    vertexlist, faces = load_meshdata_from_ply( filepath )
+    vertexlist, faces, rightup, leftup, leftdown, rightdown \
+                    = load_meshdata_from_ply( filepath )
 
     generate_blender_object( meshname, objectname, vertexlist, faces, \
-                                                    collection, view_layer )
+                                        rightup, leftup, leftdown, rightdown, \
+                                        collection, view_layer )
     return {'FINISHED'}
 
 def load_meshdata_from_ply( filepath ):
@@ -25,7 +27,11 @@ def load_meshdata_from_ply( filepath ):
     vertexpositions = plyobj["vertex"].get_filtered_data( "x", "y", "z" )
     faceindices = plyobj["face"].get_filtered_data( "vertex_indices" )
     faceindices = [ f[0] for f in faceindices ]
-    return vertexpositions, faceindices
+    border = plyobj["cornerrectangle"].get_filtered_data( \
+                                            "rightup", "leftup", \
+                                            "leftdown", "rightdown" )
+    rightup, leftup, leftdown, rightdown = border[0]
+    return vertexpositions, faceindices, rightup, leftup, leftdown, rightdown
 
 
 def extract_vertex_positions( blender_obj_info ):
@@ -35,7 +41,8 @@ def extract_vertex_positions( blender_obj_info ):
 
 
 def generate_blender_object( meshname, objectname, vertices_list, faces, \
-                                                    collection, view_layer ):
+                                        rightup, leftup, leftdown, rightdown, \
+                                        collection, view_layer ):
     mymesh = generate_mesh( vertices_list, faces, meshname )
 
     obj = bpy.data.objects.new( objectname, mymesh )
@@ -43,7 +50,10 @@ def generate_blender_object( meshname, objectname, vertices_list, faces, \
     collection.objects.link( obj )
     view_layer.objects.active = obj
 
-    #add_vertexgroup_rand( obj, borderrectangle )
+    create_vertexgroup_with_vertice( obj, "leftup", leftup )
+    create_vertexgroup_with_vertice( obj, "rightup", rightup )
+    create_vertexgroup_with_vertice( obj, "rightdown", rightdown )
+    create_vertexgroup_with_vertice( obj, "leftdown", leftdown )
 
     obj.select_set(True)
     return obj, mymesh
@@ -59,12 +69,9 @@ def generate_mesh( vertices_list, faces, meshname ):
     return mesh
 
 
-def add_vertexgroup_rand( obj, borderrectangle ):
-    bordervert_leftup, bordervert_rightup, bordervert_rightdown, \
-                                    bordervert_leftdown = borderrectangle
-    create_vertexgroup_with_vertices( obj, "leftupcorner", [bordervert_leftup] )
-    create_vertexgroup_with_vertices( obj, "rightupcorner",[bordervert_rightup])
-    create_vertexgroup_with_vertices( obj, "rightdowncorner", \
-                                    [bordervert_rightdown])
-    create_vertexgroup_with_vertices( obj, "leftdowncorner", \
-                                    [bordervert_leftdown] )
+def create_vertexgroup_with_vertice( obj, vertexgroupname, vertice ):
+    weight, add_type = 1, "REPLACE"
+    obj.vertex_groups.new( name=vertexgroupname )
+    obj.vertex_groups[ vertexgroupname ].add( [vertice], weight, add_type )
+
+

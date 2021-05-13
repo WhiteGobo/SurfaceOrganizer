@@ -44,7 +44,7 @@ def save_meshdata_to_ply( filepath, vertices, edges, faces, \
     myobj = plycontainer_from_arrays( [\
                         ("vertex", vertexpipeline, vert ), \
                         ("faces", facespipeline, faces ), \
-                        #("border", borderpipeline, borderindices ), \
+                        ("cornerrectangle", borderpipeline, borderindices ), \
                         ])
     #theoreticly "binary_big_endian" is also possible
     myformat = "ascii" if use_ascii else "binary_little_endian" 
