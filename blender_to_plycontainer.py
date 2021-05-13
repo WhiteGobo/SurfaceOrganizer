@@ -4,39 +4,50 @@ import numpy as np
 from .plyhandler.get_surfacemap_from_ply import plycontainer_from_arrays, export_plyfile
 import itertools as it
 
-def save( objects, filepath, global_matrix, use_ascii ):
-                                #use_normals, use_uv_coords, use_colors ):
-    all_vertices = []
-    all_edges = []
-    all_faces = []
-    for blender_object in objects:
-        vertex_index_offset = len( all_vertices )
-        vertices, edges, faces = get_vertices_edges_faces_from_blenderobject( \
-                                                blender_object, global_matrix )
-        all_vertices.extend( vertices )
-        for e in edges:
-            all_edges.append( tuple( v + vertex_index_offset for v in e ) )
-        for f in faces:
-            all_faces.append( tuple( v + vertex_index_offset for v in f ) )
-    save_meshdata_to_ply( filepath, all_vertices, all_edges, all_faces, \
-                                                use_ascii )
+def save( object, filepath, global_matrix, use_ascii ):
+    vertices, edges, faces = get_vertices_edges_faces_from_blenderobject( \
+                                        object, global_matrix )
+    rightup, = get_vertices_of_vertexgroup( object, "rightup" )
+    leftup, = get_vertices_of_vertexgroup( object, "leftup" )
+    rightdown, = get_vertices_of_vertexgroup( object, "rightdown" )
+    leftdown, = get_vertices_of_vertexgroup( object, "leftdown" )
+    save_meshdata_to_ply( filepath, vertices, edges, faces, \
+                                        leftup, rightup, rightdown, leftdown, \
+                                        use_ascii )
+
+def get_vertices_of_vertexgroup( object, groupname ):
+    groupindex = object.vertex_groups[ groupname ].index
+    for v in object.data.vertices:
+        for g in v.groups:
+            if g.group == groupindex:
+                yield v.index
 
 
-def save_meshdata_to_ply( filepath, vertices, edges, faces, use_ascii ):
+def save_meshdata_to_ply( filepath, vertices, edges, faces, \
+                            leftup, rightup, rightdown, leftdown, use_ascii ):
     vertexpipeline = ( \
                         ( b"float", b"x" ), \
                         ( b"float", b"y" ), \
                         ( b"float", b"z" ), \
                         )
     facespipeline = ((b"list", b"uchar", b"uint", b"vertex_indices" ), )
+    borderpipeline = ( \
+                        (b"uint", b"rightup"), \
+                        (b"uint", b"leftup"), \
+                        (b"uint", b"leftdown"), \
+                        (b"uint", b"rightdown"), \
+                        )
     vert = np.array( vertices ).T
     faces = ( np.array( faces ), )
+    borderindices = np.array(( leftup, rightup, rightdown, leftdown ))\
+                        .reshape((4,1))
     myobj = plycontainer_from_arrays( [\
                         ("vertex", vertexpipeline, vert ), \
                         ("faces", facespipeline, faces ), \
+                        #("border", borderpipeline, borderindices ), \
                         ])
-    myformat = "ascii" if use_ascii else "binary_little_endian"
-                #theoreticly "binary_big_endian" is also possible
+    #theoreticly "binary_big_endian" is also possible
+    myformat = "ascii" if use_ascii else "binary_little_endian" 
     export_plyfile( filepath , myobj, myformat )
 
 
