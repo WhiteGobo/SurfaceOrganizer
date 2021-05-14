@@ -173,6 +173,7 @@ class MyExportPLY(bpy.types.Operator, ExportHelper):
 
     @classmethod
     def poll( self, context ):
+        return len( context.selected_objects ) == 1
         conditions = ( \
                 #context.space_data is not None, \
                 len( context.selected_objects ) == 1, \
