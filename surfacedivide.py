@@ -16,11 +16,11 @@ _BORDERS = { \
             DOWN_BORDER: (RIGHTDOWN_CORNER, LEFTDOWN_CORNER), \
             }
 
-def assign_cornerpoint( targetobject, targetcorner, surfacename, targetcorner ):
+def assign_cornerpoint( targetobject, targetvertice, surfacename, targetcorner):
     if targetcorner not in _CORNERS:
         raise KeyError( f"targetcorner must be one of these: {_CORNERS}" )
     groupname = "_".join((surfacename, targetcorner))
-    verticeindex = targetcorner.index
+    verticeindex = targetvertice.index
     try:
         vertgroup = targetobject.vertex_groups[ groupname ]
     except KeyError:
@@ -36,7 +36,7 @@ def findborder_via_shortest_path( context, targetobject, \
                                                 surfacename, targetborder ):
     if targetborder not in _BORDERS:
         raise KeyError( f"targetborder must be one of these: %s" \
-                                                    % (tuple(_BORDERS.keys()))
+                                                    % (tuple(_BORDERS.keys())))
     groupname = "_".join((surfacename, targetborder))
     first, second = ( "_".join((surfacename, name)) \
                         for name in _BORDER[ targetborder ] )

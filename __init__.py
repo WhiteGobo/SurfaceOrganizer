@@ -55,6 +55,13 @@ import logging
 from . import plycontainer_to_blender
 logger = logging.getLogger( __name__ )
 
+
+from .editmodeoperators import \
+        AssignRightUpCornerPoint, \
+        AssignLeftUpCornerPoint, \
+        AssignLeftDownCornerPoint, \
+        AssignRightDownCornerPoint
+
 class MyImportPLY(bpy.types.Operator, ImportHelper):
     """Load a PLY geometry file"""
     bl_idname = "import_mesh.ply_with_border"
@@ -220,20 +227,33 @@ classes = (
     MyImportPLY,
     MyExportPLY,
     PLY_PT_export_transform,
+    AssignRightUpCornerPoint,
+    AssignLeftUpCornerPoint,
+    AssignLeftDownCornerPoint,
+    AssignRightDownCornerPoint,
 )
 
-
+class RegisterError( Exception ):
+    pass
 def register():
     for cls in classes:
-        bpy.utils.register_class(cls)
+        try:
+            bpy.utils.register_class(cls)
+        except Exception as err:
+            raise RegisterError( cls ) from err
 
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 
 
+class UnregisterError( Exception ):
+    pass
 def unregister():
     for cls in classes:
-        bpy.utils.unregister_class(cls)
+        try:
+            bpy.utils.unregister_class(cls)
+        except Exception as err:
+            raise UnregisterError( cls ) from err
 
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
