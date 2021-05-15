@@ -43,9 +43,12 @@ def findborder_via_shortest_path( context, targetobject, \
     firstvertice, = _get_vertices_of_vertexgroup( targetobject, first )
     secondvertice, = _get_vertices_of_vertexgroup( targetobject, second )
     _select_vertices( targetobject, [firstvertice, secondvertice] )
-    context.changetoeditmode
-    bpy.ops.mesh.shortest_path_select()
-    context.changetooldmode
+
+    mode = bpy.context.active_object.mode
+    bpy.ops.object.mode_set( mode='EDIT' )
+    bpy.ops.mesh.shortest_path_select() #Try this with override
+    bpy.ops.object.mode_set( mode=mode )
+    
     selected_vertices = [v.index for v in targetobject.data.vertices \
                             if v.selected ]
     try:
@@ -65,10 +68,11 @@ def _get_vertices_of_vertexgroup( object, groupname ):
                 yield v.index
 
 def _select_vertices( targetobject, verticelist ):
-    context.changetoobjectmode
-    deselect.all_vertices
+    mode = bpy.context.active_object.mode
+    bpy.ops.object.mode_set( mode='EDIT' )
+    bpy.ops.mesh.select_mode( type='VERT' )
+    bpy.ops.mesh.select_all( action='DESELECT' )
+    bpy.ops.object.mode_set( mode='OBJECT' )
     for v in verticelist:
-        select.vertice( v )
-    context.changetoeditmode
-    bpy.ops.mesh.shortest_path_select()
-    context.changetooldmode
+        v.select = True
+    bpy.ops.object.mode_set( mode=mode )
