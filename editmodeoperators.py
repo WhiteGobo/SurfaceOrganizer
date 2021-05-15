@@ -27,19 +27,19 @@ class AssignRightUpCornerPoint( _AssignCornerPoint ):
     targetcorner = surfacedivide.RIGHTUP_CORNER
 
 class AssignLeftUpCornerPoint( _AssignCornerPoint ):
-    bl_idname = "mesh.assign_rightupcornerpoint"
+    bl_idname = "mesh.assign_leftupcornerpoint"
     bl_label = "Assign rightupcornerpoint"
     bl_options = {'UNDO'}
     targetcorner = surfacedivide.LEFTUP_CORNER
 
 class AssignLeftDownCornerPoint( _AssignCornerPoint ):
-    bl_idname = "mesh.assign_rightupcornerpoint"
+    bl_idname = "mesh.assign_leftdowncornerpoint"
     bl_label = "Assign rightupcornerpoint"
     bl_options = {'UNDO'}
     targetcorner = surfacedivide.LEFTDOWN_CORNER
 
 class AssignRightDownCornerPoint( _AssignCornerPoint ):
-    bl_idname = "mesh.assign_rightupcornerpoint"
+    bl_idname = "mesh.assign_rightdowncornerpoint"
     bl_label = "Assign rightupcornerpoint"
     bl_options = {'UNDO'}
     targetcorner = surfacedivide.RIGHTDOWN_CORNER
