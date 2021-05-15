@@ -40,9 +40,9 @@ def findborder_via_shortest_path( context, targetobject, \
     groupname = "_".join((surfacename, targetborder))
     first, second = ( "_".join((surfacename, name)) \
                         for name in _BORDER[ targetborder ] )
-    firstvertice, = get_vertices_of_vertexgroup( targetobject, first )
-    secondvertice, = get_vertices_of_vertexgroup( targetobject, second )
-    select_vertices( targetobject, [firstvertice, secondvertice] )
+    firstvertice, = _get_vertices_of_vertexgroup( targetobject, first )
+    secondvertice, = _get_vertices_of_vertexgroup( targetobject, second )
+    _select_vertices( targetobject, [firstvertice, secondvertice] )
     context.changetoeditmode
     bpy.ops.mesh.shortest_path_select()
     context.changetooldmode
@@ -57,14 +57,14 @@ def findborder_via_shortest_path( context, targetobject, \
     vertgroup.add( all_vertices, 1.0, "SUBTRACT" )
     vertgroup.add( selected_vertices, 1.0, "ADD" )
 
-def get_vertices_of_vertexgroup( object, groupname ):
+def _get_vertices_of_vertexgroup( object, groupname ):
     groupindex = object.vertex_groups[ groupname ].index
     for v in object.data.vertices:
         for g in v.groups:
             if g.group == groupindex:
                 yield v.index
 
-def select_vertices( targetobject, verticelist ):
+def _select_vertices( targetobject, verticelist ):
     context.changetoobjectmode
     deselect.all_vertices
     for v in verticelist:
