@@ -53,7 +53,10 @@ class test_blender_plyimporter( unittest.TestCase ):
     
     def test_assignborder( self ):
         obj = bpy.data.objects["planeforadding"] 
-        override = {"scene":"borderadding", "selected_objects":[obj]}
+        override = {"scene":"borderadding", "selected_objects":[obj], \
+                    "active_object":obj}
+        for i, v in enumerate( obj.data.vertices ):
+            v.select = (i==3)
         bpy.ops.mesh.assign_rightupcorner( override )
 
 
