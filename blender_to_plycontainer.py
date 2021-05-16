@@ -26,9 +26,11 @@ def save( object, filepath, global_matrix, use_ascii, groupname=None ):
         rightdown, = get_vertices_of_vertexgroup( object, rightdown )
         leftdown, = get_vertices_of_vertexgroup( object, leftdown )
     except KeyError as err:
-        raise SurfaceNotCorrectInitiated( f"Tried to export Surface from Object with not correct initiated surfacedata. Object: {object}" ) from err
+        raise SurfaceNotCorrectInitiated( f"Tried to export Surface from "\
+                            +"Object with not correct initiated "\
+                            +f"surfacedata. Object: {object}" ) from err
     save_meshdata_to_ply( filepath, vertices, edges, faces, \
-                                        leftup, rightup, rightdown, leftdown, \
+                                        (leftup, rightup, rightdown, leftdown),\
                                         use_ascii )
 
 def get_vertices_of_vertexgroup( object, groupname ):
@@ -40,23 +42,29 @@ def get_vertices_of_vertexgroup( object, groupname ):
 
 
 def save_meshdata_to_ply( filepath, vertices, edges, faces, \
-                            leftup, rightup, rightdown, leftdown, use_ascii ):
-    vertexpipeline = ( \
-                        ( b"float", b"x" ), \
-                        ( b"float", b"y" ), \
-                        ( b"float", b"z" ), \
-                        )
+                            cornerdata, use_ascii, surfacenames = (None,) ):
+    surfacenames = list( surfacenames ) #[(ru(rightup), lu, ld, rd), ...]
+
+    vertexpipeline = ( ( b"float", b"x" ), ( b"float", b"y" ), ( b"float",b"z"))
     facespipeline = ((b"list", b"uchar", b"uint", b"vertex_indices" ), )
-    borderpipeline = ( \
-                        (b"uint", b"rightup"), \
-                        (b"uint", b"leftup"), \
-                        (b"uint", b"leftdown"), \
-                        (b"uint", b"rightdown"), \
-                        )
     vert = np.array( vertices ).T
     faces = ( np.array( faces ), )
-    borderindices = np.array(( leftup, rightup, rightdown, leftdown ))\
-                        .reshape((4,1))
+
+    #leftup, rightup, rightdown, leftdown = cornerdata
+    if surfacenames[0] == None and len(surfacenames) == 1:
+        borderpipeline = ( (b"uint", b"rightup"), (b"uint", b"leftup"), \
+                            (b"uint", b"leftdown"), (b"uint", b"rightdown") )
+        borderindices = np.array( cornerdata ).reshape((4,1))
+    elif all( type(n)==str for n in surfacenames ) \
+                            and len( cornerdata ) == len( surfacenames ):
+        borderpipeline = ( (b"list", b"uchar", b"uchar", b"surfacename" ), \
+                            (b"uint", b"rightup"), (b"uint", b"leftup"), \
+                            (b"uint", b"leftdown"), (b"uint", b"rightdown") )
+        borderindices = np.array( cornerdata ).reshape((4,len( surfacenames )))
+        borderindices = [ surfacenames, *borderindices ]
+    else:
+        raise SurfaceNotCorrectInitiated("surfacenames must be iterablestrings")
+
     myobj = plycontainer_from_arrays( [\
                         ("vertex", vertexpipeline, vert ), \
                         ("faces", facespipeline, faces ), \
