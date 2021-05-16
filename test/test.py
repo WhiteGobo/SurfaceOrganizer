@@ -56,8 +56,22 @@ class test_blender_plyimporter( unittest.TestCase ):
         override = {"scene":"borderadding", "selected_objects":[obj], \
                     "active_object":obj}
         for i, v in enumerate( obj.data.vertices ):
-            v.select = (i==3)
+            v.select = (i==0)
         bpy.ops.mesh.assign_rightupcorner( override )
+        for i, v in enumerate( obj.data.vertices ):
+            v.select = (i==1)
+        bpy.ops.mesh.assign_leftupcorner( override )
+        for i, v in enumerate( obj.data.vertices ):
+            v.select = (i==2)
+        bpy.ops.mesh.assign_leftdowncorner( override )
+        for i, v in enumerate( obj.data.vertices ):
+            v.select = (i==3)
+        bpy.ops.mesh.assign_rightdowncorner( override )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            filepath = os.path.join( tmpdir, "tmpfile.ply" )
+            bpy.ops.export_mesh.ply_with_border( override, \
+                                                filepath = filepath, \
+                                                use_selection = True )
 
 
     def tearDown( self ):

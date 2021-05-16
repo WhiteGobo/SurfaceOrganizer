@@ -4,13 +4,24 @@ import numpy as np
 from .plyhandler.get_surfacemap_from_ply import plycontainer_from_arrays, export_plyfile
 import itertools as it
 
-def save( object, filepath, global_matrix, use_ascii ):
+RIGHTUP, LEFTUP, LEFTDOWN, RIGHTDOWN \
+            = "rightup", "leftup", "leftdown", "rightdown"
+
+
+def save( object, filepath, global_matrix, use_ascii, groupname=None ):
+    if groupname is not None:
+        rightup, leftup, leftdown, rightdown \
+                = [ "_".join((groupname, direction)) \
+                for direction in (RIGHTUP, LEFTUP, LEFTDOWN, RIGHTDOWN)]
+    else:
+        rightup, leftup, leftdown, rightdown \
+                = RIGHTUP, LEFTUP, LEFTDOWN, RIGHTDOWN
     vertices, edges, faces = get_vertices_edges_faces_from_blenderobject( \
                                         object, global_matrix )
-    rightup, = get_vertices_of_vertexgroup( object, "rightup" )
-    leftup, = get_vertices_of_vertexgroup( object, "leftup" )
-    rightdown, = get_vertices_of_vertexgroup( object, "rightdown" )
-    leftdown, = get_vertices_of_vertexgroup( object, "leftdown" )
+    rightup, = get_vertices_of_vertexgroup( object, rightup )
+    leftup, = get_vertices_of_vertexgroup( object, leftup )
+    rightdown, = get_vertices_of_vertexgroup( object, rightdown )
+    leftdown, = get_vertices_of_vertexgroup( object, leftdown )
     save_meshdata_to_ply( filepath, vertices, edges, faces, \
                                         leftup, rightup, rightdown, leftdown, \
                                         use_ascii )

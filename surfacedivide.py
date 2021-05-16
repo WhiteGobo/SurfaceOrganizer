@@ -16,10 +16,14 @@ _BORDERS = { \
             DOWN_BORDER: (RIGHTDOWN_CORNER, LEFTDOWN_CORNER), \
             }
 
-def assign_cornerpoint( targetobject, targetvertice, surfacename, targetcorner):
+def assign_cornerpoint( targetobject, targetvertice, targetcorner, \
+                                                    surfacename = None):
     if targetcorner not in _CORNERS:
         raise KeyError( f"targetcorner must be one of these: {_CORNERS}" )
-    groupname = "_".join((surfacename, targetcorner))
+    if surfacename is not None:
+        groupname = "_".join((surfacename, targetcorner))
+    else:
+        groupname = targetcorner
     verticeindex = targetvertice.index
     try:
         vertgroup = targetobject.vertex_groups[ groupname ]

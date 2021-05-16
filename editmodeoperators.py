@@ -3,14 +3,14 @@ from . import surfacedivide
 
 class _AssignCornerPoint( bpy.types.Operator ):
     def execute( self, context ):
+        surfacename = None
         targetobject = context.active_object
         for v in targetobject.data.vertices:
             if v.select:
                 selectedvertice = v
                 break
-        surfacename = ""
         surfacedivide.assign_cornerpoint( targetobject, selectedvertice, \
-                                                surfacename, self.targetcorner )
+                                                self.targetcorner, surfacename )
         return {'FINISHED'}
 
     @classmethod
