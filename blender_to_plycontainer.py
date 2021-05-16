@@ -66,6 +66,9 @@ def get_vertices_of_vertexgroup( object, groupname ):
 def save_meshdata_to_ply( filepath, vertices, edges, faces, \
                             cornerdata, use_ascii, surfacenames = (None,), \
                             used_vertices = (None,)):
+    """
+    :todo: str convert seems shit
+    """
     surfacenames = list( surfacenames ) #[(ru(rightup), lu, ld, rd), ...]
 
     vertexpipeline = ( ( b"float", b"x" ), ( b"float", b"y" ), ( b"float",b"z"))
@@ -84,7 +87,10 @@ def save_meshdata_to_ply( filepath, vertices, edges, faces, \
                             (b"uint", b"rightup"), (b"uint", b"leftup"), \
                             (b"uint", b"leftdown"), (b"uint", b"rightdown") )
         borderindices = np.array( cornerdata ).reshape((4,len( surfacenames )))
-        borderindices = [ surfacenames, *borderindices ]
+        sn = [ [int(c.encode("utf8"), base=32) for c in name] \
+                    for name in surfacenames ]
+        borderindices = [ sn, *borderindices ]
+        del( sn )
     else:
         raise SurfaceNotCorrectInitiated("surfacenames must be iterablestrings",
                 all( type(n)==str for n in surfacenames ), cornerdata )
