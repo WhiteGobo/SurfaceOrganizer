@@ -97,7 +97,7 @@ def save_meshdata_to_ply( filepath, vertices, edges, faces, \
 
     myobj = plycontainer_from_arrays( [\
                         ("vertex", vertexpipeline, vert ), \
-                        ("faces", facespipeline, faces ), \
+                        ("face", facespipeline, faces ), \
                         ("cornerrectangle", borderpipeline, borderindices ), \
                         ])
     #theoreticly "binary_big_endian" is also possible
