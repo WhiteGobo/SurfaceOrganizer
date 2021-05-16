@@ -50,6 +50,16 @@ class test_blender_plyimporter( unittest.TestCase ):
                                                 filepath = filepath, \
                                                 use_selection = True )
 
+    def test_save_ascii_multiplesurfaces( self ):
+        newobj = bpy.data.objects["PreparedWithMultipleSurfaces"] 
+        scene = bpy.data.scenes["test_save_ascii_multiplesurfaces"]
+        with tempfile.TemporaryDirectory() as tmpdir:
+            filepath = os.path.join( tmpdir, "tmpfile.ply" )
+            override = { "selected_objects":[newobj] }
+            bpy.ops.export_mesh.ply_with_border( override, \
+                                                filepath = filepath, \
+                                                use_selection = True )
+
     
     def test_assignborder( self ):
         obj = bpy.data.objects["planeforadding"] 

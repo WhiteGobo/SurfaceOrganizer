@@ -7,6 +7,8 @@ import itertools as it
 RIGHTUP, LEFTUP, LEFTDOWN, RIGHTDOWN \
             = "rightup", "leftup", "leftdown", "rightdown"
 
+class SurfaceNotCorrectInitiated( Exception ):
+    pass
 
 def save( object, filepath, global_matrix, use_ascii, groupname=None ):
     if groupname is not None:
@@ -18,10 +20,13 @@ def save( object, filepath, global_matrix, use_ascii, groupname=None ):
                 = RIGHTUP, LEFTUP, LEFTDOWN, RIGHTDOWN
     vertices, edges, faces = get_vertices_edges_faces_from_blenderobject( \
                                         object, global_matrix )
-    rightup, = get_vertices_of_vertexgroup( object, rightup )
-    leftup, = get_vertices_of_vertexgroup( object, leftup )
-    rightdown, = get_vertices_of_vertexgroup( object, rightdown )
-    leftdown, = get_vertices_of_vertexgroup( object, leftdown )
+    try:
+        rightup, = get_vertices_of_vertexgroup( object, rightup )
+        leftup, = get_vertices_of_vertexgroup( object, leftup )
+        rightdown, = get_vertices_of_vertexgroup( object, rightdown )
+        leftdown, = get_vertices_of_vertexgroup( object, leftdown )
+    except KeyError as err:
+        raise SurfaceNotCorrectInitiated( f"Tried to export Surface from Object with not correct initiated surfacedata. Object: {object}" ) from err
     save_meshdata_to_ply( filepath, vertices, edges, faces, \
                                         leftup, rightup, rightdown, leftdown, \
                                         use_ascii )
