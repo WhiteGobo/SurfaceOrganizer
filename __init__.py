@@ -159,11 +159,7 @@ class MyExportPLY(bpy.types.Operator, ExportHelper):
 
         import time
         t = time.time()
-        try:
-            for surfname in keywords["object"].data["_subrectanglesurfaces"]:
-                export_ply.save( **keywords, groupname=surfname )
-        except KeyError:
-            export_ply.save( **keywords )
+        export_ply.save( **keywords )
         logger.info("\nSuccessfully exported %r in %.3f sec" \
                                 % (keywords["filepath"], time.time() - t))
 

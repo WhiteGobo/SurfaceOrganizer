@@ -3,6 +3,8 @@ import bmesh
 import numpy as np
 from .plyhandler.get_surfacemap_from_ply import plycontainer_from_arrays, export_plyfile
 import itertools as it
+import logging
+logger = logging.getLogger( __name__ )
 
 RIGHTUP, LEFTUP, LEFTDOWN, RIGHTDOWN \
             = "rightup", "leftup", "leftdown", "rightdown"
@@ -10,28 +12,48 @@ RIGHTUP, LEFTUP, LEFTDOWN, RIGHTDOWN \
 class SurfaceNotCorrectInitiated( Exception ):
     pass
 
-def save( object, filepath, global_matrix, use_ascii, groupname=None ):
-    if groupname is not None:
-        rightup, leftup, leftdown, rightdown \
-                = [ "_".join((groupname, direction)) \
-                for direction in (RIGHTUP, LEFTUP, LEFTDOWN, RIGHTDOWN)]
+def save( object, filepath, global_matrix, use_ascii ):
+    extras = dict()
+
+    if "_subrectanglesurfaces" in object.data:
+        tmp = object.data[ "_subrectanglesurfaces" ]
+        extras["surfacenames"] = tmp
+        create_filter = lambda name: lambda vgroup: name == vgroup.name
+        extras["used_vertices"] = [\
+                filter( create_filter(surf), iter(object.vertex_groups)) \
+                for surf in tmp ]
+        del( tmp, create_filter )
+    if "surfacenames" in extras:
+        tmpsurfacenames = extras["surfacenames"]
     else:
-        rightup, leftup, leftdown, rightdown \
-                = RIGHTUP, LEFTUP, LEFTDOWN, RIGHTDOWN
-    vertices, edges, faces = get_vertices_edges_faces_from_blenderobject( \
-                                        object, global_matrix )
-    try:
-        rightup, = get_vertices_of_vertexgroup( object, rightup )
-        leftup, = get_vertices_of_vertexgroup( object, leftup )
-        rightdown, = get_vertices_of_vertexgroup( object, rightdown )
-        leftdown, = get_vertices_of_vertexgroup( object, leftdown )
-    except KeyError as err:
-        raise SurfaceNotCorrectInitiated( f"Tried to export Surface from "\
-                            +"Object with not correct initiated "\
-                            +f"surfacedata. Object: {object}" ) from err
+        tmpsurfacenames = (None,)
+    cornerdata = []
+    for groupname in tmpsurfacenames:
+        if groupname is not None:
+            rightup, leftup, leftdown, rightdown \
+                    = [ "_".join((groupname, direction)) \
+                    for direction in (RIGHTUP, LEFTUP, LEFTDOWN, RIGHTDOWN)]
+        else:
+            rightup, leftup, leftdown, rightdown \
+                    = RIGHTUP, LEFTUP, LEFTDOWN, RIGHTDOWN
+        vertices, edges, faces = get_vertices_edges_faces_from_blenderobject( \
+                                            object, global_matrix )
+        try:
+            rightup, = get_vertices_of_vertexgroup( object, rightup )
+            leftup, = get_vertices_of_vertexgroup( object, leftup )
+            rightdown, = get_vertices_of_vertexgroup( object, rightdown )
+            leftdown, = get_vertices_of_vertexgroup( object, leftdown )
+        except KeyError as err:
+            raise SurfaceNotCorrectInitiated( f"Tried to export Surface from "\
+                                +"Object with not correct initiated "\
+                                +f"surfacedata. Object: {object}" ) from err
+        cornerdata.append((leftup, rightup, rightdown, leftdown))
+    if "surfacenames" not in extras:
+        cornerdata = cornerdata[0]
+
     save_meshdata_to_ply( filepath, vertices, edges, faces, \
-                                        (leftup, rightup, rightdown, leftdown),\
-                                        use_ascii )
+                                        cornerdata,\
+                                        use_ascii, **extras )
 
 def get_vertices_of_vertexgroup( object, groupname ):
     groupindex = object.vertex_groups[ groupname ].index
@@ -42,7 +64,8 @@ def get_vertices_of_vertexgroup( object, groupname ):
 
 
 def save_meshdata_to_ply( filepath, vertices, edges, faces, \
-                            cornerdata, use_ascii, surfacenames = (None,) ):
+                            cornerdata, use_ascii, surfacenames = (None,), \
+                            used_vertices = (None,)):
     surfacenames = list( surfacenames ) #[(ru(rightup), lu, ld, rd), ...]
 
     vertexpipeline = ( ( b"float", b"x" ), ( b"float", b"y" ), ( b"float",b"z"))
@@ -63,7 +86,8 @@ def save_meshdata_to_ply( filepath, vertices, edges, faces, \
         borderindices = np.array( cornerdata ).reshape((4,len( surfacenames )))
         borderindices = [ surfacenames, *borderindices ]
     else:
-        raise SurfaceNotCorrectInitiated("surfacenames must be iterablestrings")
+        raise SurfaceNotCorrectInitiated("surfacenames must be iterablestrings",
+                all( type(n)==str for n in surfacenames ), cornerdata )
 
     myobj = plycontainer_from_arrays( [\
                         ("vertex", vertexpipeline, vert ), \

@@ -21,6 +21,7 @@ logger = logging.getLogger( __name__ )
 class test_blender_plyimporter( unittest.TestCase ):
     def setUp( self ):
         logging.basicConfig( level=logging.DEBUG )
+        #logging.basicConfig( level=logging.CRITICAL )
         main.register()
 
 
@@ -29,7 +30,6 @@ class test_blender_plyimporter( unittest.TestCase ):
                     as testdirectory1
         override = {}
         with importlib.resources.path( testdirectory1, "tmp.ply" ) as filepath:
-            logger.critical( filepath )
             bpy.ops.import_mesh.ply_with_border( files=[{"name":str(filepath)}])
 
         objname = "tmp"
