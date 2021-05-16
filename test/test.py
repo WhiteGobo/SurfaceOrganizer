@@ -50,6 +50,12 @@ class test_blender_plyimporter( unittest.TestCase ):
                                                 filepath = filepath, \
                                                 use_selection = True )
 
+    
+    def test_assignborder( self ):
+        obj = bpy.data.objects["planeforadding"] 
+        override = {"scene":"borderadding", "selected_objects":[obj]}
+        bpy.ops.mesh.assign_rightupcorner( override )
+
 
     def tearDown( self ):
         main.unregister()
