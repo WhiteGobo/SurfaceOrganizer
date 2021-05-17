@@ -2,6 +2,9 @@ import bpy
 
 import itertools
 from .plyhandler.get_surfacemap_from_ply import load_ply_obj_from_filename
+import logging
+logger = logging.getLogger( __name__ )
+
 
 def load_ply( filepath, collection, view_layer ):
     """
@@ -14,15 +17,19 @@ def load_ply( filepath, collection, view_layer ):
     meshname = ply_name
     objectname = ply_name
 
-    vertexlist, faces, rightup, leftup, leftdown, rightdown \
-                    = load_meshdata_from_ply( filepath )
+    #vertexlist, faces, rightup, leftup, leftdown, rightdown \
+    vertexlist, faces, borders, bordernames = load_meshdata_from_ply( filepath )
 
     generate_blender_object( meshname, objectname, vertexlist, faces, \
-                                        rightup, leftup, leftdown, rightdown, \
+                                        borders, bordernames, \
+                                        #rightup, leftup, leftdown, rightdown, \
                                         collection, view_layer )
     return {'FINISHED'}
 
 def load_meshdata_from_ply( filepath ):
+    """
+    :todo: use f cr is shitty
+    """
     plyobj = load_ply_obj_from_filename( filepath )
     vertexpositions = plyobj["vertex"].get_filtered_data( "x", "y", "z" )
     faceindices = plyobj["face"].get_filtered_data( "vertex_indices" )
@@ -30,8 +37,14 @@ def load_meshdata_from_ply( filepath ):
     border = plyobj["cornerrectangle"].get_filtered_data( \
                                             "rightup", "leftup", \
                                             "leftdown", "rightdown" )
-    rightup, leftup, leftdown, rightdown = border[0]
-    return vertexpositions, faceindices, rightup, leftup, leftdown, rightdown
+    bordernames = (None,)
+    try:
+        bordernames = plyobj["cornerrectangle"].get_filtered_data("surfacename")
+        bordernames = [ "".join(chr(i) for i in name[0]) \
+                        for name in bordernames ]
+    except ValueError:
+        pass
+    return vertexpositions, faceindices, border, bordernames
 
 
 def extract_vertex_positions( blender_obj_info ):
@@ -41,7 +54,8 @@ def extract_vertex_positions( blender_obj_info ):
 
 
 def generate_blender_object( meshname, objectname, vertices_list, faces, \
-                                        rightup, leftup, leftdown, rightdown, \
+                                        borders, bordernames, \
+                                        #rightup, leftup, leftdown, rightdown, \
                                         collection, view_layer ):
     mymesh = generate_mesh( vertices_list, faces, meshname )
 
@@ -49,11 +63,24 @@ def generate_blender_object( meshname, objectname, vertices_list, faces, \
 
     collection.objects.link( obj )
     view_layer.objects.active = obj
+    for border, bordername in itertools.zip_longest(borders, bordernames):
+        rightup, leftup, leftdown, rightdown = border
+        if bordername is not None:
+            strgen = lambda name: "_".join((bordername, name))
+        else:
+            strgen = lambda name: name
+        name_leftup = strgen( "leftup" )
+        name_rightup = strgen( "rightup" )
+        name_leftdown = strgen( "leftdown" )
+        name_rightdown = strgen( "rightdown" )
 
-    create_vertexgroup_with_vertice( obj, "leftup", leftup )
-    create_vertexgroup_with_vertice( obj, "rightup", rightup )
-    create_vertexgroup_with_vertice( obj, "rightdown", rightdown )
-    create_vertexgroup_with_vertice( obj, "leftdown", leftdown )
+        create_vertexgroup_with_vertice( obj, name_leftup, leftup )
+        create_vertexgroup_with_vertice( obj, name_rightup, rightup )
+        create_vertexgroup_with_vertice( obj, name_rightdown, rightdown )
+        create_vertexgroup_with_vertice( obj, name_leftdown, leftdown )
+
+    if not (len(bordernames) == 1 and bordernames[0] is None):
+        obj.data["_subrectanglesurfaces"] = list(bordernames)
 
     obj.select_set(True)
     return obj, mymesh

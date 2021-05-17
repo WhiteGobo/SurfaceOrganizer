@@ -14,6 +14,10 @@ import tempfile
 import bpy
 import my_io_mesh_ply as main
 from my_io_mesh_ply import plyhandler
+from my_io_mesh_ply.plyhandler.get_surfacemap_from_ply import \
+            plycontainer_from_arrays, \
+            export_plyfile, \
+            load_ply_obj_from_filename
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -53,12 +57,38 @@ class test_blender_plyimporter( unittest.TestCase ):
     def test_save_ascii_multiplesurfaces( self ):
         newobj = bpy.data.objects["PreparedWithMultipleSurfaces"] 
         scene = bpy.data.scenes["test_save_ascii_multiplesurfaces"]
+        override = { "selected_objects":[newobj] }
         with tempfile.TemporaryDirectory() as tmpdir:
             filepath = os.path.join( tmpdir, "tmpfile.ply" )
-            override = { "selected_objects":[newobj] }
             bpy.ops.export_mesh.ply_with_border( override, \
                                                 filepath = filepath, \
                                                 use_selection = True )
+            override = { "scene": scene }
+            #bpy.ops.import_mesh.ply_with_border( override, \
+            #                            files=[{"name":filepath} ] )
+            plyobj = load_ply_obj_from_filename( filepath )
+            asd = plyobj["cornerrectangle"].get_filtered_data( "rightup", "leftup", "leftdown", "rightdown")
+            print( asd )
+            asd = plyobj["cornerrectangle"].get_filtered_data( "surfacename" )
+            print( asd )
+
+
+    def test_load_ascii_multiplesurfaces( self ):
+        import my_io_mesh_ply.test as testdirectory2
+        scene = bpy.data.scenes["test_load_ascii_multiplesurfaces"]
+        override = { "scene": scene }
+        with importlib.resources.path( testdirectory2, "multiplesurface.ply" ) \
+                                                                    as filepath:
+            bpy.ops.import_mesh.ply_with_border( override, \
+                                                files=[{"name":str(filepath)}])
+        obj = bpy.data.objects["multiplesurface"]
+        myvgroups = set( vgroup.name for vgroup in obj.vertex_groups )
+        testvgroups = set(( "surf1_leftup", "surf1_rightup", \
+                            "surf1_rightdown", "surf1_leftdown", \
+                            "surf2_leftup", "surf2_rightup", \
+                            "surf2_rightdown", "surf2_leftdown"))
+        self.assertEqual( myvgroups, testvgroups )
+        self.assertTrue( "_subrectanglesurfaces" in obj.data )
 
     
     def test_assignborder( self ):
@@ -85,6 +115,7 @@ class test_blender_plyimporter( unittest.TestCase ):
 
 
     def tearDown( self ):
+        bpy.ops.wm.save_as_mainfile( filepath="test/new.blend" )
         main.unregister()
 
 

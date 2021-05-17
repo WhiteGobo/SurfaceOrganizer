@@ -13,18 +13,25 @@ class SurfaceNotCorrectInitiated( Exception ):
     pass
 
 def save( object, filepath, global_matrix, use_ascii ):
-    extras = dict()
+    vertices, edges, faces = get_vertices_edges_faces_from_blenderobject( \
+                                            object, global_matrix )
+    cornerdata, surfacenames = get_cornerdata( object )
 
+    save_meshdata_to_ply( filepath, vertices, edges, faces, \
+                            cornerdata, use_ascii, surfacenames = surfacenames )
+
+def get_cornerdata( object ):
+    extras = dict()
     if "_subrectanglesurfaces" in object.data:
         tmp = object.data[ "_subrectanglesurfaces" ]
-        extras["surfacenames"] = tmp
+        #extras["surfacenames"] = tmp
+        tmpsurfacenames = tmp
         create_filter = lambda name: lambda vgroup: name == vgroup.name
-        extras["used_vertices"] = [\
+        #extras["used_vertices"] = [\
+        used_vertices = [\
                 filter( create_filter(surf), iter(object.vertex_groups)) \
                 for surf in tmp ]
         del( tmp, create_filter )
-    if "surfacenames" in extras:
-        tmpsurfacenames = extras["surfacenames"]
     else:
         tmpsurfacenames = (None,)
     cornerdata = []
@@ -36,8 +43,6 @@ def save( object, filepath, global_matrix, use_ascii ):
         else:
             rightup, leftup, leftdown, rightdown \
                     = RIGHTUP, LEFTUP, LEFTDOWN, RIGHTDOWN
-        vertices, edges, faces = get_vertices_edges_faces_from_blenderobject( \
-                                            object, global_matrix )
         try:
             rightup, = get_vertices_of_vertexgroup( object, rightup )
             leftup, = get_vertices_of_vertexgroup( object, leftup )
@@ -48,12 +53,9 @@ def save( object, filepath, global_matrix, use_ascii ):
                                 +"Object with not correct initiated "\
                                 +f"surfacedata. Object: {object}" ) from err
         cornerdata.append((leftup, rightup, rightdown, leftdown))
-    if "surfacenames" not in extras:
+    if tmpsurfacenames == (None,):
         cornerdata = cornerdata[0]
-
-    save_meshdata_to_ply( filepath, vertices, edges, faces, \
-                                        cornerdata,\
-                                        use_ascii, **extras )
+    return cornerdata, tmpsurfacenames
 
 def get_vertices_of_vertexgroup( object, groupname ):
     groupindex = object.vertex_groups[ groupname ].index
@@ -86,9 +88,8 @@ def save_meshdata_to_ply( filepath, vertices, edges, faces, \
         borderpipeline = ( (b"list", b"uchar", b"uchar", b"surfacename" ), \
                             (b"uint", b"rightup"), (b"uint", b"leftup"), \
                             (b"uint", b"leftdown"), (b"uint", b"rightdown") )
-        borderindices = np.array( cornerdata ).reshape((4,len( surfacenames )))
-        sn = [ [int(c.encode("utf8"), base=32) for c in name] \
-                    for name in surfacenames ]
+        borderindices = np.array( cornerdata ).T.reshape((4, len(surfacenames)))
+        sn = [ bytes(name, encoding="utf8") for name in surfacenames ]
         borderindices = [ sn, *borderindices ]
         del( sn )
     else:
