@@ -67,11 +67,18 @@ class test_blender_plyimporter( unittest.TestCase ):
             override = { "scene": scene }
             #bpy.ops.import_mesh.ply_with_border( override, \
             #                            files=[{"name":filepath} ] )
+
             plyobj = PlyObject.load_from_file( filepath )
-            asd = plyobj.get_filtered_data( "cornerrectangle", ("rightup", "leftup", "leftdown", "rightdown"))
-            print( asd )
-            asd = plyobj.get_filtered_data( "cornerrectangle",("surfacename",) )
-            print( asd )
+
+            asd = plyobj.get_filtered_data( "cornerrectangle", \
+                            ("rightup", "leftup", "leftdown", "rightdown"))
+            self.assertEqual( tuple( asd ), ((7, 0, 2, 15), (9, 13, 3, 1)))
+
+            asd = plyobj.get_dataarray( "cornerrectangle", "surfacename" )
+            mysurfnames = [ str( bytes(single), encoding="utf8" ) \
+                            for single in asd ]
+            self.assertEqual( tuple(mysurfnames), ("surf1", "surf2") )
+
 
 
     def test_load_ascii_multiplesurfaces( self ):
