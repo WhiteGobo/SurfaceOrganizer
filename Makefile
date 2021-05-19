@@ -4,12 +4,11 @@ blenderpackagefiles = \
 	./blender_to_plycontainer.py \
 	./__init__.py \
 	./plycontainer_to_blender.py \
-	./plyhandler/get_surfacemap_from_ply/datacontainer.py \
-	./plyhandler/get_surfacemap_from_ply/__init__.py \
-	./plyhandler/get_surfacemap_from_ply/myexport_ply.py \
-	./plyhandler/get_surfacemap_from_ply/create_surfacemap.py \
-	./plyhandler/get_surfacemap_from_ply/myimport_ply.py \
-	./plyhandler/get_surfacemap_from_ply/main.py
+	./editmodeoperators.py \
+	./plyhandler/datacontainer.py \
+	./plyhandler/__init__.py \
+	./plyhandler/myexport_ply.py \
+	./plyhandler/myimport_ply.py \
 
 default: my_io_mesh_ply.zip
 
@@ -23,7 +22,6 @@ test: test/test.py test/test.blend
 		blender -b $(word 2, $^) --python $(word 1, $^)
 
 .PHONY: clean
-
 clean:
 	-rm my_io_mesh_ply.zip
 	-rm -r __pycache__
