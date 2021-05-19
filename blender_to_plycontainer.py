@@ -102,6 +102,7 @@ def save_meshdata_to_ply( filepath, vertices, edges, faces, \
                         ("face", facespipeline, faces ), \
                         ("cornerrectangle", borderpipeline, borderindices ), \
                         ])
+
     #theoreticly "binary_big_endian" is also possible
     myformat = "ascii" if use_ascii else "binary_little_endian" 
     myobj.save_to_file( filepath, myformat )

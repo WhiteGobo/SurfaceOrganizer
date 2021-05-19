@@ -1,7 +1,7 @@
 import bpy
 
 import itertools
-from .plyhandler.get_surfacemap_from_ply import load_ply_obj_from_filename
+from .plyhandler import ObjectSpec as PlyObject
 import logging
 logger = logging.getLogger( __name__ )
 
@@ -26,23 +26,32 @@ def load_ply( filepath, collection, view_layer ):
                                         collection, view_layer )
     return {'FINISHED'}
 
+class InvalidPlyDataForSurfaceobject( Exception ):
+    pass
+
 def load_meshdata_from_ply( filepath ):
     """
     :todo: use f cr is shitty
     """
-    plyobj = load_ply_obj_from_filename( filepath )
-    vertexpositions = plyobj["vertex"].get_filtered_data( "x", "y", "z" )
-    faceindices = plyobj["face"].get_filtered_data( "vertex_indices" )
-    faceindices = [ f[0] for f in faceindices ]
-    border = plyobj["cornerrectangle"].get_filtered_data( \
-                                            "rightup", "leftup", \
-                                            "leftdown", "rightdown" )
+    plyobj = PlyObject.load_from_file( filepath )
+    try:
+        vertexpositions = plyobj.get_filtered_data("vertex", ("x", "y", "z") )
+        faceindices = plyobj.get_filtered_data( "face", ("vertex_indices",) )
+        faceindices = [ f[0] for f in faceindices ]
+        border = plyobj.get_filtered_data( "cornerrectangle",\
+                                            ("rightup", "leftup", \
+                                            "leftdown", "rightdown") )
+    except KeyError as err:
+        raise InvalidPlyDataForSurfaceobject( "couldnt find all needed "\
+                        "elements and associated properties that are needed" )\
+                        from err
+
     bordernames = (None,)
     try:
-        bordernames = plyobj["cornerrectangle"].get_filtered_data("surfacename")
+        bordernames = plyobj.get_filtered_data("cornerrectangle", ("surfacename",))
         bordernames = [ "".join(chr(i) for i in name[0]) \
                         for name in bordernames ]
-    except ValueError:
+    except KeyError:
         pass
     return vertexpositions, faceindices, border, bordernames
 

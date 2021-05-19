@@ -14,10 +14,11 @@ import tempfile
 import bpy
 import my_io_mesh_ply as main
 from my_io_mesh_ply import plyhandler
-from my_io_mesh_ply.plyhandler.get_surfacemap_from_ply import \
-            plycontainer_from_arrays, \
-            export_plyfile, \
-            load_ply_obj_from_filename
+from my_io_mesh_ply.plyhandler import ObjectSpec as PlyObject
+#from my_io_mesh_ply.plyhandler.get_surfacemap_from_ply import \
+#            plycontainer_from_arrays, \
+#            export_plyfile, \
+#            load_ply_obj_from_filename
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -30,7 +31,7 @@ class test_blender_plyimporter( unittest.TestCase ):
 
 
     def test_load_ascii( self ):
-        import my_io_mesh_ply.plyhandler.get_surfacemap_from_ply.tests \
+        import my_io_mesh_ply.plyhandler.tests \
                     as testdirectory1
         override = {}
         with importlib.resources.path( testdirectory1, "tmp.ply" ) as filepath:
@@ -66,10 +67,10 @@ class test_blender_plyimporter( unittest.TestCase ):
             override = { "scene": scene }
             #bpy.ops.import_mesh.ply_with_border( override, \
             #                            files=[{"name":filepath} ] )
-            plyobj = load_ply_obj_from_filename( filepath )
-            asd = plyobj["cornerrectangle"].get_filtered_data( "rightup", "leftup", "leftdown", "rightdown")
+            plyobj = PlyObject.load_from_file( filepath )
+            asd = plyobj.get_filtered_data( "cornerrectangle", ("rightup", "leftup", "leftdown", "rightdown"))
             print( asd )
-            asd = plyobj["cornerrectangle"].get_filtered_data( "surfacename" )
+            asd = plyobj.get_filtered_data( "cornerrectangle",("surfacename",) )
             print( asd )
 
 
