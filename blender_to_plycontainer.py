@@ -1,7 +1,8 @@
 import bpy
 import bmesh
 import numpy as np
-from .plyhandler.get_surfacemap_from_ply import plycontainer_from_arrays, export_plyfile
+#from .plyhandler.get_surfacemap_from_ply import plycontainer_from_arrays, export_plyfile
+from .plyhandler import ObjectSpec as PlyObject
 import itertools as it
 import logging
 logger = logging.getLogger( __name__ )
@@ -73,21 +74,21 @@ def save_meshdata_to_ply( filepath, vertices, edges, faces, \
     """
     surfacenames = list( surfacenames ) #[(ru(rightup), lu, ld, rd), ...]
 
-    vertexpipeline = ( ( b"float", b"x" ), ( b"float", b"y" ), ( b"float",b"z"))
-    facespipeline = ((b"list", b"uchar", b"uint", b"vertex_indices" ), )
+    vertexpipeline = ( ( "float", "x" ), ( "float", "y" ), ( "float","z"))
+    facespipeline = (("list", "uchar", "uint", "vertex_indices" ), )
     vert = np.array( vertices ).T
     faces = ( np.array( faces ), )
 
     #leftup, rightup, rightdown, leftdown = cornerdata
     if surfacenames[0] == None and len(surfacenames) == 1:
-        borderpipeline = ( (b"uint", b"rightup"), (b"uint", b"leftup"), \
-                            (b"uint", b"leftdown"), (b"uint", b"rightdown") )
+        borderpipeline = ( ("uint", "rightup"), ("uint", "leftup"), \
+                            ("uint", "leftdown"), ("uint", "rightdown") )
         borderindices = np.array( cornerdata ).reshape((4,1))
     elif all( type(n)==str for n in surfacenames ) \
                             and len( cornerdata ) == len( surfacenames ):
-        borderpipeline = ( (b"list", b"uchar", b"uchar", b"surfacename" ), \
-                            (b"uint", b"rightup"), (b"uint", b"leftup"), \
-                            (b"uint", b"leftdown"), (b"uint", b"rightdown") )
+        borderpipeline = ( ("list", "uchar", "uchar", "surfacename" ), \
+                            ("uint", "rightup"), ("uint", "leftup"), \
+                            ("uint", "leftdown"), ("uint", "rightdown") )
         borderindices = np.array( cornerdata ).T.reshape((4, len(surfacenames)))
         sn = [ bytes(name, encoding="utf8") for name in surfacenames ]
         borderindices = [ sn, *borderindices ]
@@ -96,14 +97,14 @@ def save_meshdata_to_ply( filepath, vertices, edges, faces, \
         raise SurfaceNotCorrectInitiated("surfacenames must be iterablestrings",
                 all( type(n)==str for n in surfacenames ), cornerdata )
 
-    myobj = plycontainer_from_arrays( [\
+    myobj = PlyObject.from_arrays( [\
                         ("vertex", vertexpipeline, vert ), \
                         ("face", facespipeline, faces ), \
                         ("cornerrectangle", borderpipeline, borderindices ), \
                         ])
     #theoreticly "binary_big_endian" is also possible
     myformat = "ascii" if use_ascii else "binary_little_endian" 
-    export_plyfile( filepath , myobj, myformat )
+    myobj.save_to_file( filepath, myformat )
 
 
 def get_vertices_edges_faces_from_blenderobject( blender_object, global_matrix):
