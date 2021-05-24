@@ -52,15 +52,10 @@ from bpy_extras.io_utils import (
     orientation_helper,
 )
 import logging
-from . import plycontainer_to_blender
 logger = logging.getLogger( __name__ )
 
+from . import custom_properties
 
-from .editmodeoperators import \
-        AssignRightUpCornerPoint, \
-        AssignLeftUpCornerPoint, \
-        AssignLeftDownCornerPoint, \
-        AssignRightDownCornerPoint
 
 class MyImportPLY(bpy.types.Operator, ImportHelper):
     """Load a PLY geometry file"""
@@ -227,36 +222,59 @@ classes = (
     MyImportPLY,
     MyExportPLY,
     PLY_PT_export_transform,
-    AssignRightUpCornerPoint,
-    AssignLeftUpCornerPoint,
-    AssignLeftDownCornerPoint,
-    AssignRightDownCornerPoint,
+    #AssignRightUpCornerPoint,
+    #AssignLeftUpCornerPoint,
+    #AssignLeftDownCornerPoint,
+    #AssignRightDownCornerPoint,
 )
 
 class RegisterError( Exception ):
     pass
+from . import editmodeoperators as edop
 def register():
     for cls in classes:
         try:
             bpy.utils.register_class(cls)
         except Exception as err:
             raise RegisterError( cls ) from err
+    #for cls in (edop.AssignRightUpCornerPoint, edop.AssignLeftUpCornerPoint,
+    #        edop.AssignLeftDownCornerPoint, edop.AssignRightDownCornerPoint):
+    #    bpy.utils.register_class( cls )
+    try:
+        custom_properties.register()
+    except Exception as err:
+        raise RegisterError( "couldnt register 'custom_properties'" ) from err
+    try:
+        edop.register()
+    except Exception as err:
+        raise RegisterError( "couldnt register 'editmodeoperators'" ) from err
 
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
+
+    from . import graphic
+    try:
+        graphic.register()
+    except Exception as err:
+        raise RegisterError( "couldnt register 'graphic'" ) from err
 
 
 class UnregisterError( Exception ):
     pass
 def unregister():
+    from . import editmodeoperators as edop
     for cls in classes:
         try:
             bpy.utils.unregister_class(cls)
-        except Exception as err:
-            raise UnregisterError( cls ) from err
+        except (ValueError, RuntimeError) as err:
+            logger.debug( err )
+    edop.unregister()
 
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+    from . import graphic
+    graphic.unregister()
+    custom_properties.unregister()
 
 
 if __name__ == "__main__":

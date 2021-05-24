@@ -1,10 +1,15 @@
 ZIP = zip
 ZIP_ARGS = 
+BLENDER = blender
+#BLENDERARGS = --debug-value 3 --verbose 3
+BLENDERARGS = 
 blenderpackagefiles = \
 	./blender_to_plycontainer.py \
 	./__init__.py \
 	./plycontainer_to_blender.py \
 	./editmodeoperators.py \
+	./surfacedivide.py \
+	./graphic.py \
 	./plyhandler/datacontainer.py \
 	./plyhandler/__init__.py \
 	./plyhandler/myexport_ply.py \
@@ -18,8 +23,8 @@ my_io_mesh_ply.zip: $(blenderpackagefiles)
 
 .PHONY: test
 test: test/test.py test/test.blend
-	env TESTSCRIPTS=$(abspath test/) TESTMODULE=$(abspath ../) \
-		blender -b $(word 2, $^) --python $(word 1, $^)
+	env TESTSCRIPTS=$(abspath test/) TESTMODULE=$(abspath ./) \
+		$(BLENDER) $(BLENDERARGS) -b $(word 2, $^) --python $(word 1, $^)
 
 .PHONY: clean
 clean:

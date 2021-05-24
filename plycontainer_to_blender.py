@@ -1,5 +1,4 @@
-import bpy
-
+#import bpy
 import itertools
 from .plyhandler import ObjectSpec as PlyObject
 import logging
@@ -11,6 +10,7 @@ def load_ply( filepath, collection, view_layer ):
     :param collection: context.collection from blenderoperator
     :param view_layer: context.view_layer from blenderoperator
     """
+    import bpy
     #filename = "/home/hfechner/tmp.ply"
     #filename = "/home/hfechner/meshfortests.ply"
     ply_name = bpy.path.display_name_from_filepath( filepath )
@@ -66,36 +66,28 @@ def generate_blender_object( meshname, objectname, vertices_list, faces, \
                                         borders, bordernames, \
                                         #rightup, leftup, leftdown, rightdown, \
                                         collection, view_layer ):
+    import bpy
     mymesh = generate_mesh( vertices_list, faces, meshname )
 
     obj = bpy.data.objects.new( objectname, mymesh )
 
     collection.objects.link( obj )
     view_layer.objects.active = obj
+    from . import surfacedivide as surfdiv
     for border, bordername in itertools.zip_longest(borders, bordernames):
+        surfdiv.add_new_partial_surface( obj, bordername )
         rightup, leftup, leftdown, rightdown = border
-        if bordername is not None:
-            strgen = lambda name: "_".join((bordername, name))
-        else:
-            strgen = lambda name: name
-        name_leftup = strgen( "leftup" )
-        name_rightup = strgen( "rightup" )
-        name_leftdown = strgen( "leftdown" )
-        name_rightdown = strgen( "rightdown" )
-
-        create_vertexgroup_with_vertice( obj, name_leftup, leftup )
-        create_vertexgroup_with_vertice( obj, name_rightup, rightup )
-        create_vertexgroup_with_vertice( obj, name_rightdown, rightdown )
-        create_vertexgroup_with_vertice( obj, name_leftdown, leftdown )
-
-    if not (len(bordernames) == 1 and bordernames[0] is None):
-        obj.data["_subrectanglesurfaces"] = list(bordernames)
+        surfdiv.assign_rightup_cornerpoint( obj, obj.data.vertices[rightup] )
+        surfdiv.assign_leftup_cornerpoint( obj, obj.data.vertices[leftup])
+        surfdiv.assign_leftdown_cornerpoint( obj, obj.data.vertices[leftdown])
+        surfdiv.assign_rightdown_cornerpoint( obj, obj.data.vertices[rightdown])
 
     obj.select_set(True)
     return obj, mymesh
 
 
 def generate_mesh( vertices_list, faces, meshname ):
+    import bpy
     mesh = bpy.data.meshes.new( name=meshname )
     edgelist = [] # if faces are given no edges need to be provided
     mesh.from_pydata( vertices_list, edgelist, faces )
@@ -111,3 +103,10 @@ def create_vertexgroup_with_vertice( obj, vertexgroupname, vertice ):
     obj.vertex_groups[ vertexgroupname ].add( [vertice], weight, add_type )
 
 
+def _help_select_single_vertice( override, index ):
+    obj = override["active_object"]
+    mode = obj.mode
+    bpy.ops.object.mode_set( override, mode='OBJECT' )
+    for i, v in enumerate( obj.data.vertices ):
+        v.select = (i==index)
+    bpy.ops.object.mode_set( override, mode=mode )

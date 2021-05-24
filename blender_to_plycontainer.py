@@ -1,4 +1,3 @@
-import bpy
 import bmesh
 import numpy as np
 #from .plyhandler.get_surfacemap_from_ply import plycontainer_from_arrays, export_plyfile
@@ -16,10 +15,25 @@ class SurfaceNotCorrectInitiated( Exception ):
 def save( object, filepath, global_matrix, use_ascii ):
     vertices, edges, faces = get_vertices_edges_faces_from_blenderobject( \
                                             object, global_matrix )
-    cornerdata, surfacenames = get_cornerdata( object )
+    from .custom_properties import get_all_partialsurfaceinfo
+    from .surfacedivide import RIGHTUP_CORNER, LEFTUP_CORNER, \
+                                LEFTDOWN_CORNER, RIGHTDOWN_CORNER
+    infodict_all = get_all_partialsurfaceinfo( object )
+    infodict_all = list( infodict_all )
+    cornlist =(RIGHTUP_CORNER, LEFTUP_CORNER, LEFTDOWN_CORNER,RIGHTDOWN_CORNER)
+    cornerdata = tuple( \
+                        tuple(inf[ corn ] for corn in cornlist ) \
+                        for inf in infodict_all \
+                        )
+    surfacenames = tuple( infodict[ "Name" ] for infodict in infodict_all )
+    extra = {}
+    if "Vertexgroup" in infodict_all[0]:
+        extra["partialsurface_vertices"] = [info[ "Vertexgroup" ] \
+                                            for info in infodict_all ]
 
     save_meshdata_to_ply( filepath, vertices, edges, faces, \
-                            cornerdata, use_ascii, surfacenames = surfacenames )
+                            cornerdata, use_ascii, surfacenames = surfacenames,\
+                            **extra )
 
 def get_cornerdata( object ):
     extras = dict()
@@ -36,6 +50,16 @@ def get_cornerdata( object ):
     else:
         tmpsurfacenames = (None,)
     cornerdata = []
+    targetobject = object
+    from .custom_properties import get_all_partialsurfaceinfo
+    from .surfacedivide import RIGHTUP_CORNER, LEFTUP_CORNER, \
+                                LEFTDOWN_CORNER, RIGHTDOWN_CORNER
+    for partialsurface_info in get_all_partialsurfaceinfo( targetobject ):
+        name = partialsurface_info["Name"]
+        rightup = partialsurface_info[ RIGHTUP_CORNER ]
+        leftup = partialsurface_info[ LEFTUP_CORNER ]
+        leftdown = partialsurface_info[ LEFTDOWN_CORNER ]
+        rightdown = partialsurface_info[ RIGHTDOWN_CORNER ]
     for groupname in tmpsurfacenames:
         if groupname is not None:
             rightup, leftup, leftdown, rightdown \
@@ -68,7 +92,8 @@ def get_vertices_of_vertexgroup( object, groupname ):
 
 def save_meshdata_to_ply( filepath, vertices, edges, faces, \
                             cornerdata, use_ascii, surfacenames = (None,), \
-                            used_vertices = (None,)):
+                            used_vertices = (None,), \
+                            partialsurface_vertices=None ):
     """
     :todo: str convert seems shit
     """
@@ -79,7 +104,35 @@ def save_meshdata_to_ply( filepath, vertices, edges, faces, \
     vert = np.array( vertices ).T
     faces = ( np.array( faces ), )
 
-    #leftup, rightup, rightdown, leftdown = cornerdata
+    #if partialsurface_vertices is not None:
+    #    raise Exception(partialsurface_vertices )
+    #rightup, leftup, leftdown, rightdown = cornerdata
+    partialsurfaceinfo  = _pack_partialsurfaceinfo( surfacenames, cornerdata )
+
+    myobj = PlyObject.from_arrays( [\
+                        ("vertex", vertexpipeline, vert ), \
+                        ("face", facespipeline, faces ), \
+                        #("cornerrectangle", borderpipeline, borderindices ), \
+                        partialsurfaceinfo, \
+                        ])
+
+    #theoreticly "binary_big_endian" is also possible
+    myformat = "ascii" if use_ascii else "binary_little_endian" 
+    myobj.save_to_file( filepath, myformat )
+
+
+def _pack_partialsurfaceinfo( surfacenames, cornerdata ):
+    borderpipeline = [ ("uint", "rightup"), ("uint", "leftup"), \
+                            ("uint", "leftdown"), ("uint", "rightdown") ]
+    borderindices = list( 
+            np.array( cornerdata ).T.reshape((4, len(surfacenames))) )
+    if surfacenames != (None,):
+        borderpipeline.append( ("list", "uchar", "uchar", "surfacename" ) )
+        sn = [ bytes(name, encoding="utf8") for name in surfacenames ]
+        borderindices.append( sn )
+    return ("cornerrectangle", tuple(borderpipeline), tuple(borderindices) )
+
+#def _pack_partialsurfaceinfo( surfacenames, cornerdata ):
     if surfacenames[0] == None and len(surfacenames) == 1:
         borderpipeline = ( ("uint", "rightup"), ("uint", "leftup"), \
                             ("uint", "leftdown"), ("uint", "rightdown") )
@@ -96,16 +149,8 @@ def save_meshdata_to_ply( filepath, vertices, edges, faces, \
     else:
         raise SurfaceNotCorrectInitiated("surfacenames must be iterablestrings",
                 all( type(n)==str for n in surfacenames ), cornerdata )
-
-    myobj = PlyObject.from_arrays( [\
-                        ("vertex", vertexpipeline, vert ), \
-                        ("face", facespipeline, faces ), \
-                        ("cornerrectangle", borderpipeline, borderindices ), \
-                        ])
-
-    #theoreticly "binary_big_endian" is also possible
-    myformat = "ascii" if use_ascii else "binary_little_endian" 
-    myobj.save_to_file( filepath, myformat )
+    raise Exception("cornerrectangle", borderpipeline, borderindices )
+    return ("cornerrectangle", borderpipeline, borderindices )
 
 
 def get_vertices_edges_faces_from_blenderobject( blender_object, global_matrix):
