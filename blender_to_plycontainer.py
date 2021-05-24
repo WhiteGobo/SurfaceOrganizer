@@ -132,26 +132,6 @@ def _pack_partialsurfaceinfo( surfacenames, cornerdata ):
         borderindices.append( sn )
     return ("cornerrectangle", tuple(borderpipeline), tuple(borderindices) )
 
-#def _pack_partialsurfaceinfo( surfacenames, cornerdata ):
-    if surfacenames[0] == None and len(surfacenames) == 1:
-        borderpipeline = ( ("uint", "rightup"), ("uint", "leftup"), \
-                            ("uint", "leftdown"), ("uint", "rightdown") )
-        borderindices = np.array( cornerdata ).reshape((4,1))
-    elif all( type(n)==str for n in surfacenames ) \
-                            and len( cornerdata ) == len( surfacenames ):
-        borderpipeline = ( ("list", "uchar", "uchar", "surfacename" ), \
-                            ("uint", "rightup"), ("uint", "leftup"), \
-                            ("uint", "leftdown"), ("uint", "rightdown") )
-        borderindices = np.array( cornerdata ).T.reshape((4, len(surfacenames)))
-        sn = [ bytes(name, encoding="utf8") for name in surfacenames ]
-        borderindices = [ sn, *borderindices ]
-        del( sn )
-    else:
-        raise SurfaceNotCorrectInitiated("surfacenames must be iterablestrings",
-                all( type(n)==str for n in surfacenames ), cornerdata )
-    raise Exception("cornerrectangle", borderpipeline, borderindices )
-    return ("cornerrectangle", borderpipeline, borderindices )
-
 
 def get_vertices_edges_faces_from_blenderobject( blender_object, global_matrix):
     """
