@@ -30,8 +30,7 @@ def ensure_partial_surface( targetobject ):
     surfacelist = allinfo.partial_surface_info
     if len( surfacelist ) < 1:
         surfacelist.add()
-    if index < 0:
-        index = 0
+        allinfo.active_surface_index = 0
 
 
 def assign_cornerpoint( targetobject, targetvertice, targetcorner ):

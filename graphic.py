@@ -48,6 +48,13 @@ class MainPanel(bpy.types.Panel):
         row = box.row()
         row.operator("mesh.assign_leftdowncorner", text="left down")
         row.operator("mesh.assign_rightdowncorner", text="right down")
+        box = layout.box()
+        row = box.row()
+        row.operator("mesh.toggle_leftupcorner", text="left up")
+        row.operator("mesh.toggle_rightupcorner", text="right up")
+        row = box.row()
+        row.operator("mesh.toggle_leftdowncorner", text="left down")
+        row.operator("mesh.toggle_rightdowncorner", text="right down")
 
         box = layout.box()
         box.label(text="SecondBox")

@@ -49,6 +49,73 @@ class RemovePartialSurface( bpy.types.Operator ):
         return True
 
 
+def _toggle_vertice( targetobject, vertice_index ):
+    mode = targetobject.mode
+    for sc in bpy.data.scenes:
+        if targetobject.name in sc.objects:
+            scene = sc
+            break
+    override = { "scene": scene, "active_object": targetobject }
+    bpy.ops.object.mode_set( override, mode='EDIT' )
+    #bpy.ops.mesh.select_mode( type='VERT' )
+    #bpy.ops.mesh.select_all( action='DESELECT' )
+    bpy.ops.object.mode_set( override, mode='OBJECT' )
+    v = targetobject.data.vertices[ vertice_index ]
+    v.select = not v.select
+    bpy.ops.object.mode_set( override, mode=mode )
+
+class _ToggleCornerPoint:
+    bl_options = {'UNDO'}
+    def execute( self, context ):
+        targetobject = context.active_object
+        allinfo = targetobject.partial_surface_information
+        index = allinfo.active_surface_index 
+        partsurf_info = allinfo.partial_surface_info[ index ]
+        vert = self.get_corner( partsurf_info )
+        _toggle_vertice( targetobject, vert )
+        return {'FINISHED'}
+
+    @classmethod
+    def poll( cls, context ):
+        if context.active_object == None:
+            return False
+        if context.active_object.mode != 'EDIT':
+            return False
+        targetobject = context.active_object
+        allinfo = targetobject.partial_surface_information
+        index = allinfo.active_surface_index 
+        if index < 0 or index >= len( allinfo.partial_surface_info ):
+            return False
+        if cls.get_corner( allinfo.partial_surface_info[ index ] ) < 0:
+            return False
+        return True
+
+class toggle_rightupcorner( _ToggleCornerPoint, bpy.types.Operator ):
+    bl_idname = "mesh.toggle_rightupcorner"
+    bl_label = "Toggle rightupcornerpoint"
+    @classmethod
+    def get_corner( cls, partsurf_info ):
+        return partsurf_info.rightup_corner
+class toggle_leftupcorner( _ToggleCornerPoint, bpy.types.Operator ):
+    bl_idname = "mesh.toggle_leftupcorner"
+    bl_label = "Toggle leftupcornerpoint"
+    @classmethod
+    def get_corner( cls, partsurf_info ):
+        return partsurf_info.leftup_corner
+class toggle_leftdowncorner( _ToggleCornerPoint, bpy.types.Operator ):
+    bl_idname = "mesh.toggle_leftdowncorner"
+    bl_label = "Toggle leftdowncornerpoint"
+    @classmethod
+    def get_corner( cls, partsurf_info ):
+        return partsurf_info.leftdown_corner
+class toggle_rightdowncorner( _ToggleCornerPoint, bpy.types.Operator ):
+    bl_idname = "mesh.toggle_rightdowncorner"
+    bl_label = "Toggle rightdowncornerpoint"
+    @classmethod
+    def get_corner( cls, partsurf_info ):
+        return partsurf_info.rightdown_corner
+
+
 class _AssignCornerPoint:
     def execute( self, context ):
         surfacename = None
@@ -107,6 +174,8 @@ _classes = ( \
         AssignLeftDownCornerPoint, AssignRightDownCornerPoint,\
         NewPartialSurface, \
         RemovePartialSurface, \
+        toggle_rightupcorner, toggle_leftupcorner, \
+        toggle_leftdowncorner, toggle_rightdowncorner, \
         )
 
 def register():
