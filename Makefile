@@ -14,6 +14,10 @@ blenderpackagefiles = \
 	./plyhandler/__init__.py \
 	./plyhandler/myexport_ply.py \
 	./plyhandler/myimport_ply.py \
+	./utils/border_operators.py \
+	./utils/surface_operators.py \
+	./utils/__init__.py
+
 
 default: my_io_mesh_ply.zip
 

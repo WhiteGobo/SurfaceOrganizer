@@ -15,6 +15,11 @@ PlyObject = plyhandler.ObjectSpec
 testdirectory1 = importlib.import_module( ".test", "test_my_io_mesh_ply" )
 testdirectory2 = importlib.import_module( ".tests", \
                                         "test_my_io_mesh_ply.plyhandler" )
+utils = importlib.import_module( ".utils", "test_my_io_mesh_ply" )
+utils.border_operators = importlib.import_module( ".border_operators", \
+                                        "test_my_io_mesh_ply.utils" )
+utils.surface_operators = importlib.import_module( ".surface_operators", \
+                                        "test_my_io_mesh_ply.utils" )
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -28,6 +33,14 @@ class test_blender_plyimporter( unittest.TestCase ):
         #raise Exception()
         main.register()
 
+
+    def test_border_operators( self ):
+        utils.border_operators
+        pass
+
+    def test_surface_operators( self ):
+        utils.surface_operators
+        pass
 
     def test_load_ascii( self ):
         override = {}
