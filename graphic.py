@@ -26,7 +26,7 @@ class MainPanel(bpy.types.Panel):
     bl_label = "Select"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_context = "object"
+    bl_context = "data" #"object"
     bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
