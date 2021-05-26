@@ -83,6 +83,10 @@ class MainPanel(bpy.types.Panel):
             except Exception:
                 current_partialsurface = None
             if current_partialsurface is not None:
+                box.prop( current_partialsurface, "up_border" )
+                box.prop( current_partialsurface, "left_border" )
+                box.prop( current_partialsurface, "down_border" )
+                box.prop( current_partialsurface, "right_border" )
                 box.prop( current_partialsurface, "vertexgroup" )
 
     #@classmethod
