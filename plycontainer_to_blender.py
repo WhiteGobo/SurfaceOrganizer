@@ -66,13 +66,20 @@ def generate_blender_object( meshname, objectname, vertices_list, faces, \
                                         borders, bordernames, \
                                         #rightup, leftup, leftdown, rightdown, \
                                         collection, view_layer ):
+    """
+    :todo: setting view_layer.objects.active seems to have strange interactions
+            with other parts of the program
+    """
     import bpy
     mymesh = generate_mesh( vertices_list, faces, meshname )
 
     obj = bpy.data.objects.new( objectname, mymesh )
 
     collection.objects.link( obj )
-    view_layer.objects.active = obj
+    #The next line seems to interact strangely with context.active_object
+    #i had problems using ops.mode_set if context.active_object differs from
+    #context.view_layer.objects.active
+    view_layer.objects.active = obj 
     from . import surfacedivide as surfdiv
     for border, bordername in itertools.zip_longest(borders, bordernames):
         surfdiv.add_new_partial_surface( obj, bordername )

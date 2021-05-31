@@ -25,6 +25,7 @@ class NewPartialSurface( bpy.types.Operator ):
             return False
         return True
 
+
 class RemovePartialSurface( bpy.types.Operator ):
     bl_idname = "mesh.remove_partialsurface"
     bl_label = "Remove Partialsurface"

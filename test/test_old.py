@@ -39,47 +39,31 @@ class test_blender_plyimporter( unittest.TestCase ):
         pass
 
     def test_surface_operators( self ):
-        newobj = bpy.data.objects[ "TestSurfaceOperators" ] 
-        scene = bpy.data.scenes[ "TestSurfaceOperators" ]
+        #utils.surface_operators
+        #newobj = bpy.data.objects[ "TestSurfaceOperators" ] 
         #scene = newobj.users_scene[0]
-        override = { \
-                #"scene":scene, \
-                "active_object":newobj, \
-                #"edit_object": newobj, \
-                #"selected_objects":[newobj], \
-                #"selected_active_objects":[ newobj ], \
-                }
-
-        allinfo = newobj.partial_surface_information
-        index = allinfo.active_surface_index 
-        partsurf_info = allinfo.partial_surface_info[ index ]
-        partsurf_name = partsurf_info.name
-
+        #scene = bpy.data.scenes[ "TestSurfaceOperators" ]
+        #override = { "scene":scene, "active_object":newobj, "edit_object": newobj, "selected_objects":[newobj], "selected_active_objects":[ newobj ] }
+        #override = { "active_object":newobj, "edit_object": newobj, "selected_objects":[newobj], "selected_active_objects":[ newobj ] }
+        #override = { "active_object":newobj }
+        bpy.ops.object.mode_set( mode='OBJECT')
+        raise Exception( bpy.data.objects["TestSurfaceOperators"].mode)
         bpy.ops.mesh.autocomplete_bordered_partialsurface( override )
-
-        vgroup = newobj.vertex_groups[ partsurf_info.vertexgroup ]
-        for i in range( 0, 64 ):
-            v = newobj.data.vertices[i]
         for v in newobj.data.vertices:
-            i = v.index
-            grouplist = [ g.group for g in v.groups ]
+            for g in v.groups:
+                print( v.index, g.group )
+        for i in range( 20, 36 ):
             if i in ( 25, 26, 29, 30 ):
-                #self.assertIn( vgroup.index, grouplist )
-                pass
+                self.assertEqual( len(list(newobj.data.vertices[i].groups)), 1 )
             else:
-                self.assertIn( vgroup.index, grouplist )
-        #for i in (20, 21, 22, 23, 24, 25, 26, 27, 28, \
-        #                29, 30, 31, 32, 33, 34, 35):
+                self.assertEqual( len(list(newobj.data.vertices[i].groups)), 2 )
 
 
 
     def test_load_ascii( self ):
-        #scene = bpy.data.scenes["TestLoadSurface"]
-        #scene = bpy.data.scenes[ "TestSurfaceOperators" ]
-        #override = { "scene": scene }
         override = {}
         with importlib.resources.path( testdirectory2, "tmp.ply" ) as filepath:
-            bpy.ops.import_mesh.ply_with_border( override, files=[{"name":str(filepath)}])
+            bpy.ops.import_mesh.ply_with_border( files=[{"name":str(filepath)}])
 
         objname = "tmp"
         newobj = bpy.data.objects[ -1 ] #last created object

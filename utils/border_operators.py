@@ -1,4 +1,75 @@
 import bpy.types
+import logging
+logger = logging.getLogger( __name__ )
+
+class _add_new_border:
+    bl_options = {'UNDO'}
+    def execute( self, context ):
+        targetobject = context.active_object
+        allinfo = targetobject.partial_surface_information
+        index = allinfo.active_surface_index
+        partsurf_info = allinfo.partial_surface_info[ index ]
+
+        newname = self.create_border_name( partsurf_info )
+        vgroup = targetobject.vertex_groups.new( name = newname )
+        self.set_border_name( partsurf_info, vgroup.name )
+        _add_vertices_to_vertexgroup( vgroup, targetobject )
+
+        return {'FINISHED'}
+
+    @classmethod
+    def poll( cls, context ):
+        if context.active_object is None:
+            return False
+        targetobject = context.active_object
+        allinfo = targetobject.partial_surface_information
+        index = allinfo.active_surface_index
+        if index < 0:
+            return False
+        partsurf_info = allinfo.partial_surface_info[ index ]
+        return cls.get_border_name( partsurf_info ) == ""
+
+class add_new_border_right( _add_new_border,bpy.types.Operator ):
+    bl_idname = "mesh.add_border_right"
+    bl_label = "Add border right"
+    @classmethod
+    def get_border_name( cls, partsurf_info ):
+        return partsurf_info.right_border
+    def set_border_name( self, partsurf_info, name ):
+        partsurf_info.right_border = name
+    def create_border_name( self, partsurf_info ):
+        return "right_" + partsurf_info.name
+class add_new_border_up( _add_new_border,bpy.types.Operator ):
+    bl_idname = "mesh.add_border_up"
+    bl_label = "Add border up"
+    @classmethod
+    def get_border_name( cls, partsurf_info ):
+        return partsurf_info.up_border
+    def set_border_name( self, partsurf_info, name ):
+        partsurf_info.up_border = name
+    def create_border_name( self, partsurf_info ):
+        return "up_" + partsurf_info.name
+class add_new_border_left( _add_new_border,bpy.types.Operator ):
+    bl_idname = "mesh.add_border_left"
+    bl_label = "Add border left"
+    @classmethod
+    def get_border_name( cls, partsurf_info ):
+        return partsurf_info.left_border
+    def set_border_name( self, partsurf_info, name ):
+        partsurf_info.left_border = name
+    def create_border_name( self, partsurf_info ):
+        return "left_" + partsurf_info.name
+class add_new_border_down( _add_new_border,bpy.types.Operator ):
+    bl_idname = "mesh.add_border_down"
+    bl_label = "Add border down"
+    @classmethod
+    def get_border_name( cls, partsurf_info ):
+        return partsurf_info.down_border
+    def set_border_name( self, partsurf_info, name ):
+        partsurf_info.down_border = name
+    def create_border_name( self, partsurf_info ):
+        return "down_" + partsurf_info.name
+
 
 class asdf( bpy.types.Operator ):
     bl_idname = "mesh.asdf"
@@ -22,3 +93,28 @@ class asdf( bpy.types.Operator ):
                     second < 0, second > lenvertices):
             return False
         return True
+
+def _add_vertices_to_vertexgroup( vgroup, targetobject ):
+    #vertices should already be selected so no need to act here
+    #select_vertices( targetobject, vertices )
+    targetobject.vertex_groups.active_index = vgroup.index
+    override = { "active_object": targetobject }
+    bpy.ops.object.vertex_group_assign( override )
+
+
+_classes = (\
+        add_new_border_right, \
+        add_new_border_up, \
+        add_new_border_left, \
+        add_new_border_down, \
+        )
+def register():
+    for cls in _classes:
+        bpy.utils.register_class( cls )
+
+def unregister():
+    for cls in reversed( _classes ):
+        try:
+            bpy.utils.unregister_class( cls )
+        except (ValueError, RuntimeError) as err:
+            logger.debug( err )

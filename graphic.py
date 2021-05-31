@@ -83,10 +83,18 @@ class MainPanel(bpy.types.Panel):
             except Exception:
                 current_partialsurface = None
             if current_partialsurface is not None:
-                box.prop( current_partialsurface, "up_border" )
-                box.prop( current_partialsurface, "left_border" )
-                box.prop( current_partialsurface, "down_border" )
-                box.prop( current_partialsurface, "right_border" )
+                row = box.row()
+                row.prop( current_partialsurface, "up_border" )
+                row.operator("mesh.add_border_up", text="", icon="ADD" )
+                row = box.row()
+                row.prop( current_partialsurface, "left_border" )
+                row.operator("mesh.add_border_left", text="", icon="ADD" )
+                row = box.row()
+                row.prop( current_partialsurface, "down_border" )
+                row.operator("mesh.add_border_down", text="", icon="ADD" )
+                row = box.row()
+                row.prop( current_partialsurface, "right_border" )
+                row.operator("mesh.add_border_right", text="", icon="ADD" )
                 box.prop( current_partialsurface, "vertexgroup" )
 
     #@classmethod

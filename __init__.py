@@ -55,6 +55,7 @@ import logging
 logger = logging.getLogger( __name__ )
 
 from . import custom_properties
+from . import utils
 
 
 class MyImportPLY(bpy.types.Operator, ImportHelper):
@@ -62,41 +63,25 @@ class MyImportPLY(bpy.types.Operator, ImportHelper):
     bl_idname = "import_mesh.ply_with_border"
     bl_label = "myImport PLY with border"
     bl_options = {'UNDO'}
-
     files: CollectionProperty(
         name="File Path",
         description="File path used for importing the PLY file",
         type=bpy.types.OperatorFileListElement,
     )
-
-    ## Hide opertator properties, rest of this is managed in C. See WM_operator_properties_filesel().
-    #hide_props_region: BoolProperty(
-    #    name="Hide Operator Properties",
-    #    description="Collapse the region displaying the operator settings",
-    #    default=True,
-    #)
-
     directory: StringProperty()
-
     filter_glob: StringProperty(default="*.ply", options={'HIDDEN'})
-
     def execute(self, context):
         import os
-        #from . import import_ply
         from . import plycontainer_to_blender as import_ply
-
         context.window.cursor_set('WAIT')
-
         paths = [ os.path.join(self.directory, name.name) \
                                     for name in self.files ]
         import time
-
         for path in paths:
             t = time.time()
             import_ply.load_ply( path, context.collection, context.view_layer )
             logger.info("\nSuccessfully imported %r in %.3f sec" \
                                             % (path, time.time() - t))
-
         context.window.cursor_set('DEFAULT')
 
         return {'FINISHED'}
@@ -248,6 +233,10 @@ def register():
         edop.register()
     except Exception as err:
         raise RegisterError( "couldnt register 'editmodeoperators'" ) from err
+    try:
+        utils.register()
+    except Exception as err:
+        raise RegisterError( "couldnt register 'utils'" ) from err
 
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
@@ -274,6 +263,7 @@ def unregister():
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
     from . import graphic
     graphic.unregister()
+    utils.unregister()
     custom_properties.unregister()
 
 
