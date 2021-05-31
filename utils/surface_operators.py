@@ -39,19 +39,21 @@ class NewPartialSurface( bpy.types.Operator ):
         targetobject = context.active_object
         allinfo = targetobject.partial_surface_information
         index = allinfo.active_surface_index 
+        if index<0:
+            return False
         partsurf_info = allinfo.partial_surface_info[ index ]
         corners = ( partsurf_info.rightup_corner, partsurf_info.leftup_corner, \
                 partsurf_info.leftdown_corner, partsurf_info.rightdown_corner )
         for i in corners:
             if i < 0:
-                logger.debug( f"{self.bl_idname}.poll() failed because "\
+                logger.debug( f"{cls.bl_idname}.poll() failed because "\
                                 +"needed all cornerpoints must be defined" )
                 return False
         borders = ( partsurf_info.up_border, partsurf_info.left_border, \
                     partsurf_info.down_border, partsurf_info.right_border )
         for name in borders:
             if name == "":
-                logger.debug( f"{self.bl_idname}.poll() failed because "\
+                logger.debug( f"{cls.bl_idname}.poll() failed because "\
                                 +"needed all border must be defined" )
                 return False
         return True

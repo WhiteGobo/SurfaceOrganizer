@@ -60,42 +60,44 @@ class MainPanel(bpy.types.Panel):
         box.label(text="SecondBox")
         #box.prop( qwer, "brubru", slider=True )
         #box.prop( bpy.types.Scene.brubrusettings, "my_settings" )
-        if context.active_object != None:
-            obj = context.active_object
-            #box.prop( obj.partial_surface_information, "my_settings" )
+        obj = context.active_object
+        #box.prop( obj.partial_surface_information, "my_settings" )
+        row = box.row()
+        row.template_list( 
+                listtype_name = "OBJECT_UL_surfacethingy", 
+                list_id = "", \
+                dataptr = obj.partial_surface_information,
+                propname = "partial_surface_info", 
+                active_dataptr = obj.partial_surface_information, 
+                active_propname = "active_surface_index", 
+                rows = 3,\
+                )
+        sidebar = row.column()
+        sidebar.operator("mesh.new_partialsurface", text="", icon="ADD")
+        sidebar.operator("mesh.remove_partialsurface",text="",icon="REMOVE")
+        partlist = obj.partial_surface_information.partial_surface_info
+        index = obj.partial_surface_information.active_surface_index
+        try:
+            current_partialsurface = partlist[ index ]
+        except Exception:
+            current_partialsurface = None
+        if current_partialsurface is not None:
             row = box.row()
-            row.template_list( 
-                    listtype_name = "OBJECT_UL_surfacethingy", 
-                    list_id = "", \
-                    dataptr = obj.partial_surface_information,
-                    propname = "partial_surface_info", 
-                    active_dataptr = obj.partial_surface_information, 
-                    active_propname = "active_surface_index", 
-                    rows = 3,\
-                    )
-            sidebar = row.column()
-            sidebar.operator("mesh.new_partialsurface", text="", icon="ADD")
-            sidebar.operator("mesh.remove_partialsurface",text="",icon="REMOVE")
-            partlist = obj.partial_surface_information.partial_surface_info
-            index = obj.partial_surface_information.active_surface_index
-            try:
-                current_partialsurface = partlist[ index ]
-            except Exception:
-                current_partialsurface = None
-            if current_partialsurface is not None:
-                row = box.row()
-                row.prop( current_partialsurface, "up_border" )
-                row.operator("mesh.add_border_up", text="", icon="ADD" )
-                row = box.row()
-                row.prop( current_partialsurface, "left_border" )
-                row.operator("mesh.add_border_left", text="", icon="ADD" )
-                row = box.row()
-                row.prop( current_partialsurface, "down_border" )
-                row.operator("mesh.add_border_down", text="", icon="ADD" )
-                row = box.row()
-                row.prop( current_partialsurface, "right_border" )
-                row.operator("mesh.add_border_right", text="", icon="ADD" )
-                box.prop( current_partialsurface, "vertexgroup" )
+            row.prop( current_partialsurface, "up_border" )
+            row.operator("mesh.add_border_up", text="", icon="ADD" )
+            row = box.row()
+            row.prop( current_partialsurface, "left_border" )
+            row.operator("mesh.add_border_left", text="", icon="ADD" )
+            row = box.row()
+            row.prop( current_partialsurface, "down_border" )
+            row.operator("mesh.add_border_down", text="", icon="ADD" )
+            row = box.row()
+            row.prop( current_partialsurface, "right_border" )
+            row.operator("mesh.add_border_right", text="", icon="ADD" )
+            box.prop( current_partialsurface, "vertexgroup" )
+        box.operator( "mesh.autocomplete_bordered_partialsurface", \
+                        text="autom. surf.complete")
+
 
     #@classmethod
     #def poll( cls, context ):
