@@ -27,7 +27,11 @@ my_io_mesh_ply.zip: $(blenderpackagefiles)
 
 .PHONY: test
 test: test/test.py test/test.blend
-	env TESTSCRIPTS=$(abspath test/) TESTMODULE=$(abspath ./) \
+	env TESTSCRIPTS=$(abspath test/) TESTMODULE=$(abspath ./) SAVEINBLENDER=0\
+		$(BLENDER) $(BLENDERARGS) -b $(word 2, $^) --python $(word 1, $^)
+
+test_with_save: test/test.py test/test.blend
+	env TESTSCRIPTS=$(abspath test/) TESTMODULE=$(abspath ./) SAVEINBLENDER=1\
 		$(BLENDER) $(BLENDERARGS) -b $(word 2, $^) --python $(word 1, $^)
 
 .PHONY: clean

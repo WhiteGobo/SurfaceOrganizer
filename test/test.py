@@ -4,6 +4,10 @@ _main_modulepath = os.path.join( str(os.environ["TESTMODULE"]), \
                                         "__init__.py")
 _main_loader = importlib.machinery.SourceFileLoader("test_my_io_mesh_ply", \
                                         _main_modulepath )
+try:
+    _main_saveinblenderfile = (0 < int( os.environ["SAVEINBLENDER"] ) )
+except Exception:
+    _main_saveinblenderfile = False
 main = _main_loader.load_module()
 import sys
 import unittest
@@ -58,18 +62,12 @@ class test_blender_plyimporter( unittest.TestCase ):
         bpy.ops.mesh.autocomplete_bordered_partialsurface( override )
 
         vgroup = newobj.vertex_groups[ partsurf_info.vertexgroup ]
-        for i in range( 0, 64 ):
-            v = newobj.data.vertices[i]
         for v in newobj.data.vertices:
-            i = v.index
-            grouplist = [ g.group for g in v.groups ]
-            if i in ( 25, 26, 29, 30 ):
-                #self.assertIn( vgroup.index, grouplist )
-                pass
-            else:
+            grouplist = set( g.group for g in v.groups )
+            if v.index in range(20,36):
                 self.assertIn( vgroup.index, grouplist )
-        #for i in (20, 21, 22, 23, 24, 25, 26, 27, 28, \
-        #                29, 30, 31, 32, 33, 34, 35):
+            else:
+                self.assertEqual( grouplist, set() )
 
 
 
@@ -181,7 +179,8 @@ class test_blender_plyimporter( unittest.TestCase ):
 
 
     def tearDown( self ):
-        #bpy.ops.wm.save_as_mainfile( filepath="test/new.blend" )
+        if _main_saveinblenderfile:
+            bpy.ops.wm.save_as_mainfile( filepath="test/new.blend" )
         main.unregister()
 
 def _help_select_single_vertice( override, index ):

@@ -3,17 +3,18 @@ import bmesh
 import itertools
 
 def find_possible_partialsurfaces_to_border( targetobject, partialsurfaceinfo ):
-    rightup, leftup, leftdown, rightdown, border_indices \
+    rightup, leftup, leftdown, rightdown, border_indices\
             = _extract_info_from_partialsurfaceinfo( targetobject, \
                                                     partialsurfaceinfo )
 
-
-
     faces_indiceslist, rightup_neighbours, possible_leftup, \
-            possible_leftdown, possible_rightup \
+            possible_leftdown, possible_rightup, all_faces_indiceslist \
             = _get_neighbours_to_border_and_faceindices_without_border( \
             targetobject, rightup, leftup, leftdown, rightdown, border_indices )
 
+    exclude_criteria_edges = set(_find_boundaryedges(all_faces_indiceslist))\
+                                .difference( border_indices )
+    exclude_criteria_vertices = set( itertools.chain(*exclude_criteria_edges) )
 
     foundcycles = _find_cycles_next_to_border( \
                         faces_indiceslist, rightup_neighbours, \
@@ -22,7 +23,10 @@ def find_possible_partialsurfaces_to_border( targetobject, partialsurfaceinfo ):
     _complete_surfaces_verticelist \
                         = _complete_cycles_next_to_border( \
                         foundcycles, faces_indiceslist, border_indices )
-    return list( _complete_surfaces_verticelist )
+    for vertlist in _complete_surfaces_verticelist:
+        if not vertlist.intersection( exclude_criteria_vertices ):
+            yield( vertlist )
+    #return list( _complete_surfaces_verticelist )
 
 
 def _extract_info_from_partialsurfaceinfo( targetobject, partialsurfaceinfo ):
@@ -218,14 +222,12 @@ def _find_all_boundaries( rightup, vert_to_edges ):
                                 "next_vertice": tmpnextvertice, \
                                 })
                 except Exception:
-                    print( Exception)
                     if rightup in e:
                         yield tmpvertlist
             try:
                 next_vertice = get_unvisited( nextedge, visited )
                 used_edges.add( nextedge )
             except Exception:
-                print( Exception)
                 if rightup in nextedge:
                     yield vertlist
                 next_vertice = None
@@ -269,16 +271,18 @@ def _get_neighbours_to_border_and_faceindices_without_border( targetobject,\
                                                 .difference( border_indices )
     possible_rightup = set( neighbour_to_cornerpoints[ rightup ] )\
                                                 .difference( border_indices )
+    all_faces_indiceslist = [ tuple( vert.index for vert in face.verts ) \
+                            for face in workmesh.faces ]
 
     tmpverts = [ vert for vert in workmesh.verts \
                 if vert.index in border_indices ]
     for vert in tmpverts:
         workmesh.verts.remove( vert )
-    faces_indiceslist = [ tuple( vert.index for vert in face.verts ) \
+    filtered_faces_indiceslist = [ tuple( vert.index for vert in face.verts ) \
                             for face in workmesh.faces ]
     workmesh.free()
-    return faces_indiceslist, rightup_neighbours, possible_leftup, \
-            possible_leftdown, possible_rightup
+    return filtered_faces_indiceslist, rightup_neighbours, possible_leftup, \
+            possible_leftdown, possible_rightup, all_faces_indiceslist
 
 
 def _complete_boundary_to_surfaceindices( boundary, surface_indexlist ):
