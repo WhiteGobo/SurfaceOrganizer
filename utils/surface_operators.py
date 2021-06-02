@@ -10,6 +10,8 @@ class NewPartialSurface( bpy.types.Operator ):
     bl_label = "Autocomplete partialsurface"
     bl_options = {'UNDO'}
     def execute( self, context ):
+        context.window.cursor_set('WAIT')
+        self.report( {'INFO'}, "This is a test" )
         targetobject = context.active_object
         #this is a hotfix for 'object.mode_set'
         context.view_layer.objects.active = targetobject
@@ -29,6 +31,7 @@ class NewPartialSurface( bpy.types.Operator ):
             if _onetime:
                 _onetime = False
                 partsurf_info.vertexgroup = vgroup.name
+        context.window.cursor_set('DEFAULT')
         return {'FINISHED'}
 
     @classmethod

@@ -43,8 +43,9 @@ class test_blender_plyimporter( unittest.TestCase ):
         pass
 
     def test_surface_operators( self ):
-        newobj = bpy.data.objects[ "TestSurfaceOperators" ] 
         scene = bpy.data.scenes[ "TestSurfaceOperators" ]
+        #normaluse
+        newobj = bpy.data.objects[ "TestSurfaceOperators" ] 
         #scene = newobj.users_scene[0]
         override = { \
                 #"scene":scene, \
@@ -54,13 +55,13 @@ class test_blender_plyimporter( unittest.TestCase ):
                 #"selected_active_objects":[ newobj ], \
                 }
 
+
+        bpy.ops.mesh.autocomplete_bordered_partialsurface( override )
+
         allinfo = newobj.partial_surface_information
         index = allinfo.active_surface_index 
         partsurf_info = allinfo.partial_surface_info[ index ]
         partsurf_name = partsurf_info.name
-
-        bpy.ops.mesh.autocomplete_bordered_partialsurface( override )
-
         vgroup = newobj.vertex_groups[ partsurf_info.vertexgroup ]
         for v in newobj.data.vertices:
             grouplist = set( g.group for g in v.groups )
@@ -68,6 +69,20 @@ class test_blender_plyimporter( unittest.TestCase ):
                 self.assertIn( vgroup.index, grouplist )
             else:
                 self.assertEqual( grouplist, set() )
+
+        newobj = bpy.data.objects[ "TestSurfaceOp_autocompleteStar" ] 
+        override = { \
+                "active_object":newobj, \
+                }
+        bpy.ops.mesh.autocomplete_bordered_partialsurface( override )
+
+        return
+
+        newobj = bpy.data.objects[ "TestSurfaceOp_autocomplete4points" ] 
+        override = { \
+                "active_object":newobj, \
+                }
+        bpy.ops.mesh.autocomplete_bordered_partialsurface( override )
 
 
 

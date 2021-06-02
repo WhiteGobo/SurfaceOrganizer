@@ -6,27 +6,43 @@ def find_possible_partialsurfaces_to_border( targetobject, partialsurfaceinfo ):
     rightup, leftup, leftdown, rightdown, border_indices\
             = _extract_info_from_partialsurfaceinfo( targetobject, \
                                                     partialsurfaceinfo )
+    all_faces_indiceslist = _get_faces_as_indextuples( targetobject )
 
-    faces_indiceslist, rightup_neighbours, possible_leftup, \
-            possible_leftdown, possible_rightup, all_faces_indiceslist \
-            = _get_neighbours_to_border_and_faceindices_without_border( \
-            targetobject, rightup, leftup, leftdown, rightdown, border_indices )
+    faces_indiceslist = [ face for face in all_faces_indiceslist \
+                        if set( border_indices ).intersection( face ) == set() ]
+    faces_vertexindices_set = [ set( face ) for face in all_faces_indiceslist ]
+    vert_to_face = _get_verttoface_dict( faces_vertexindices_set )
 
-    exclude_criteria_edges = set(_find_boundaryedges(all_faces_indiceslist))\
-                                .difference( border_indices )
-    exclude_criteria_vertices = set( itertools.chain(*exclude_criteria_edges) )
+    rightup_neighbours, possible_leftup, possible_leftdown, possible_rightdown \
+            = _get_neighbours_to_border( vert_to_face, border_indices, \
+                                    [rightup, leftup, leftdown, rightdown])
 
     foundcycles = _find_cycles_next_to_border( \
                         faces_indiceslist, rightup_neighbours, \
-                        possible_leftup, possible_leftdown, possible_rightup )
+                        possible_leftup, possible_leftdown, possible_rightdown )
 
     _complete_surfaces_verticelist \
                         = _complete_cycles_next_to_border( \
                         foundcycles, faces_indiceslist, border_indices )
+
+    exclude_criteria_edges = set(_find_boundaryedges(all_faces_indiceslist))\
+                                .difference( border_indices )
+    exclude_criteria_vertices = set( itertools.chain(*exclude_criteria_edges) )
     for vertlist in _complete_surfaces_verticelist:
         if not vertlist.intersection( exclude_criteria_vertices ):
+            print( "asd", vertlist )
             yield( vertlist )
     #return list( _complete_surfaces_verticelist )
+
+
+def _get_faces_as_indextuples( targetobject ):
+    workmesh = bmesh.new()
+    workmesh.from_mesh( targetobject.data )
+    workmesh.faces.ensure_lookup_table()
+    all_faces_indiceslist = [ tuple( vert.index for vert in face.verts ) \
+                            for face in workmesh.faces ]
+    workmesh.free()
+    return all_faces_indiceslist
 
 
 def _extract_info_from_partialsurfaceinfo( targetobject, partialsurfaceinfo ):
@@ -68,6 +84,7 @@ def _find_boundaryedges( faces_indiceslist ):
     boundaryedges = [ edge for edge, times in edgecounter.items() if times==1 ]
     return boundaryedges
 
+
 def _find_possible_innercircles( boundaryedges, neigh_list_rightup, \
                                 neigh_list_leftup, neigh_list_leftdown, \
                                 neigh_list_rightdown ):
@@ -89,6 +106,7 @@ def _find_possible_innercircles( boundaryedges, neigh_list_rightup, \
                 returncircle = singlecircle
                 break
     return returncircle
+
 
 def _reduce_edgeset_more_than_2_edges( edgeset ):
     assert type( edgeset ) == set, "reduce_edgeset... should use set " \
@@ -252,39 +270,6 @@ def _find_cycles_next_to_border( faces_indiceslist, rightup_neighbours, \
             yield circle
 
 
-def _get_neighbours_to_border_and_faceindices_without_border( targetobject,\
-                                        rightup, leftup, leftdown, rightdown,\
-                                        border_indices ):
-    workmesh = bmesh.new()
-    workmesh.from_mesh( targetobject.data )
-    #dont need this because index remains the same after vertremoval
-    #workmesh.verts.ensure_lookup_table()
-    #workmesh_to_original = { v:v.index for v in workmesh.verts }
-    #tmpverts = [ workmesh.verts[ index ] for index in border_indices ]
-    neighbour_to_cornerpoints = _find_neighbours( workmesh, rightup, leftup, \
-                                                leftdown, rightdown )
-    rightup_neighbours = set( neighbour_to_cornerpoints[ rightup ] )\
-                                                .difference(border_indices )
-    possible_leftup = set( neighbour_to_cornerpoints[ leftup ] )\
-                                                .difference( border_indices )
-    possible_leftdown = set( neighbour_to_cornerpoints[ leftdown ] )\
-                                                .difference( border_indices )
-    possible_rightup = set( neighbour_to_cornerpoints[ rightup ] )\
-                                                .difference( border_indices )
-    all_faces_indiceslist = [ tuple( vert.index for vert in face.verts ) \
-                            for face in workmesh.faces ]
-
-    tmpverts = [ vert for vert in workmesh.verts \
-                if vert.index in border_indices ]
-    for vert in tmpverts:
-        workmesh.verts.remove( vert )
-    filtered_faces_indiceslist = [ tuple( vert.index for vert in face.verts ) \
-                            for face in workmesh.faces ]
-    workmesh.free()
-    return filtered_faces_indiceslist, rightup_neighbours, possible_leftup, \
-            possible_leftdown, possible_rightup, all_faces_indiceslist
-
-
 def _complete_boundary_to_surfaceindices( boundary, surface_indexlist ):
     vert_to_face = dict()
     for face in surface_indexlist:
@@ -305,19 +290,32 @@ def _complete_boundary_to_surfaceindices( boundary, surface_indexlist ):
         i = i+1
     return all_vertices_set
 
+def _get_verttoface_dict( faces_vertexindices_set ):
+    vert_to_face = dict()
+    for face_indices in faces_vertexindices_set:
+        for v in face_indices:
+            tmplist = vert_to_face.setdefault( v, list() )
+            tmplist.append( face_indices )
+    return vert_to_face
 
-def _find_neighbours( mybmesh, rightup, leftup, leftdown, rightdown ):
-    mybmesh.edges.ensure_lookup_table()
-    neighbours = { rightup:set(), leftup:set(), leftdown:set(), rightdown:set()}
-    for face in mybmesh.faces:
-        face_indices = set( v.index for v in face.verts )
-        for corner in face_indices.intersection( neighbours.keys() ):
-            neighbours[ corner ].update( face_indices )
-    return neighbours
-    for edge in mybmesh.edges:
-        a, b = edge.verts[0], edge.verts[1]
-        if a in neighbours and b not in neighbours:
-                neighbours[ a ].append( b )
-        elif b in neighbours and a not in neighbours:
-            neighbours[ b ].append( a )
-    return neighbours
+
+def _get_neighbours_to_border( vert_to_face, border_indices, cornpoints ):
+    """
+    :param faces_vertexindices_set: A list of all the faces. Each face is
+                represented by a set of the verticeindices
+    """
+    neighbours = { v:set() for v in cornpoints }
+
+    tobevisited = list( neighbours.keys() )
+    for v_source in tobevisited:
+        for face in vert_to_face[ v_source ]:
+            notborderindices = set(face).difference( border_indices )
+            if notborderindices != set():
+                neighbours[ v_source ].update( notborderindices )
+            else:
+                for v in face:
+                    if v not in neighbours.keys():
+                        tobevisited.append( v )
+                        neighbours[ v ] = neighbours[ v_source ]
+    for point in cornpoints:
+        yield set( neighbours[ point ] ).difference( border_indices )
