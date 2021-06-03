@@ -30,7 +30,6 @@ def find_possible_partialsurfaces_to_border( targetobject, partialsurfaceinfo ):
     exclude_criteria_vertices = set( itertools.chain(*exclude_criteria_edges) )
     for vertlist in _complete_surfaces_verticelist:
         if not vertlist.intersection( exclude_criteria_vertices ):
-            print( "asd", vertlist )
             yield( vertlist )
     #return list( _complete_surfaces_verticelist )
 

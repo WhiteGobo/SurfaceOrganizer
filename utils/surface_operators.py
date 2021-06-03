@@ -11,7 +11,7 @@ class NewPartialSurface( bpy.types.Operator ):
     bl_options = {'UNDO'}
     def execute( self, context ):
         context.window.cursor_set('WAIT')
-        self.report( {'INFO'}, "This is a test" )
+        #self.report( {'INFO'}, "This is a test" )
         targetobject = context.active_object
         #this is a hotfix for 'object.mode_set'
         context.view_layer.objects.active = targetobject

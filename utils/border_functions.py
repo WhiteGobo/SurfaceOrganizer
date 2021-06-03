@@ -1,4 +1,7 @@
 import bpy
+import bmesh
+from collections import Counter
+import itertools
 
 def get_selected_vertices( targetobject ):
     #assert targetobject.mode == "OBJECT", "targetobject must be in objectmode"
@@ -18,27 +21,29 @@ def get_selected_vertices( targetobject ):
 def get_selected_edges_as_indextuples( targetobject ):
     """
     scene containing targetobject must be in edge selectmode
-    scene.tool_settings.mesh_select_mode == (Falsem True, False)
+    scene.tool_settings.mesh_select_mode == (False, True, False)
     """
     #is_edgemode = (scene.tool_settings.mesh_select_mode ==(False, True, False))
     mode = targetobject.mode
-    cond = (mode != 'OBJECT')
-    if cond:
-        #ensure active_object == active_layer.active_object
-        bpy.ops.object.mode_set( mode='OBJECT' )
-
-    for e in targetobject.data.edges:
-        if e.select:
-            yield ( e.vertices[0], e.vertices[1] )
-
-    if cond:
-        bpy.ops.object.mode_set( mode=mode )
+    if mode == 'OBJECT':
+        for e in targetobject.data.edges:
+            if e.select:
+                yield ( e.vertices[0], e.vertices[1] )
+    elif mode == 'EDIT':
+        helpmesh = bmesh.from_edit_mesh( targetobject.data )
+        for e in helpmesh.edges:
+            if e.select:
+                yield ( e.verts[0], e.verts[1] )
 
 
-from collections import Counter
-import itertools
 class NotThreadLikeEdgesError( Exception ):
     pass
+def selected_edges_is_threadlike( targetobject ):
+
+    edges = list( get_selected_edges_as_indextuples( targetobject ) )
+    edgecounter = Counter( itertools.chain(*edges) )
+    return 2 == len( [ v for v, number in edgecounter.items() if number == 1 ] )
+
 def get_thread_from_selected_edges( targetobject ):
     edges = list( get_selected_edges_as_indextuples( targetobject ) )
     edgecounter = Counter( itertools.chain(*edges) )
@@ -59,3 +64,4 @@ def get_thread_from_selected_edges( targetobject ):
         current, = neighbours[ current ].difference( thread[ -2: ] )
         thread.append( current )
     return thread
+

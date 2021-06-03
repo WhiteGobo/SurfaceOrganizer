@@ -1,5 +1,6 @@
 import bpy.types
 import logging
+from . import border_functions as bof
 logger = logging.getLogger( __name__ )
 
 class _add_new_border:
@@ -15,9 +16,9 @@ class _add_new_border:
         #self.set_border_name( partsurf_info, vgroup.name )
         #_add_vertices_to_vertexgroup( vgroup, targetobject )
 
-        from . import border_functions as bof
         selverts = bof.get_thread_from_selected_edges( targetobject )
-        partsurf_info["up_border_indexlist"] = selverts
+        #partsurf_info["up_border_indexlist"] = selverts
+        partsurf_info[ self.vertices_index_border_name ] = selverts
 
         return {'FINISHED'}
 
@@ -30,6 +31,8 @@ class _add_new_border:
         if not is_in_edgeselectmode( context.scene ):
             return False
         targetobject = context.active_object
+        if not bof.selected_edges_is_threadlike( targetobject ):
+            return False
         allinfo = targetobject.partial_surface_information
         index = allinfo.active_surface_index
         if index < 0:
@@ -40,6 +43,7 @@ class _add_new_border:
 class add_new_border_right( _add_new_border,bpy.types.Operator ):
     bl_idname = "mesh.add_border_right"
     bl_label = "Add border right"
+    vertices_index_border_name = "right_border_indexlist"
     @classmethod
     def get_border_name( cls, partsurf_info ):
         return partsurf_info.right_border
@@ -50,6 +54,7 @@ class add_new_border_right( _add_new_border,bpy.types.Operator ):
 class add_new_border_up( _add_new_border,bpy.types.Operator ):
     bl_idname = "mesh.add_border_up"
     bl_label = "Add border up"
+    vertices_index_border_name = "up_border_indexlist"
     @classmethod
     def get_border_name( cls, partsurf_info ):
         return partsurf_info.up_border
@@ -60,6 +65,7 @@ class add_new_border_up( _add_new_border,bpy.types.Operator ):
 class add_new_border_left( _add_new_border,bpy.types.Operator ):
     bl_idname = "mesh.add_border_left"
     bl_label = "Add border left"
+    vertices_index_border_name = "left_border_indexlist"
     @classmethod
     def get_border_name( cls, partsurf_info ):
         return partsurf_info.left_border
@@ -70,6 +76,7 @@ class add_new_border_left( _add_new_border,bpy.types.Operator ):
 class add_new_border_down( _add_new_border,bpy.types.Operator ):
     bl_idname = "mesh.add_border_down"
     bl_label = "Add border down"
+    vertices_index_border_name = "down_border_indexlist"
     @classmethod
     def get_border_name( cls, partsurf_info ):
         return partsurf_info.down_border
