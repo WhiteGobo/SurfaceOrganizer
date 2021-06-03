@@ -206,7 +206,7 @@ def menu_func_export(self, context):
 classes = (
     MyImportPLY,
     MyExportPLY,
-    PLY_PT_export_transform,
+    #PLY_PT_export_transform,
     #AssignRightUpCornerPoint,
     #AssignLeftUpCornerPoint,
     #AssignLeftDownCornerPoint,

@@ -30,15 +30,8 @@ logger = logging.getLogger( __name__ )
 
 class test_blender_plyimporter( unittest.TestCase ):
     def setUp( self ):
-        #main.unregister()
-        try:
-            main.register()
-        except Exception:
-            pass
-        #try:
-        #    bpy.ops.mesh.autocomplete_bordered_partialsurface
-        #except AttributeError:
-        #    main.register()
+        main.unregister()
+        main.register()
         pass
 
     def test_border_operators( self ):
@@ -61,7 +54,6 @@ class test_blender_plyimporter( unittest.TestCase ):
         scene.tool_settings.mesh_select_mode = (True, False, False)
 
         self.assertEqual( (0,5,4,2), get_bordervertices() )
-
 
 
     def test_surface_operators( self ):
@@ -103,6 +95,7 @@ class test_blender_plyimporter( unittest.TestCase ):
         newobj = bpy.data.objects[ "TestSurfaceOp_autocomplete4points" ] 
         override["active_object"] = newobj
         bpy.ops.mesh.autocomplete_bordered_partialsurface( override )
+
 
 
     def test_load_ascii( self ):
@@ -233,3 +226,5 @@ if __name__=="__main__":
     sys.argv = [__file__] \
             + (sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else [])
     unittest.main()
+    #main.unregister()
+
