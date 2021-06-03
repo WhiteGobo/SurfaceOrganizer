@@ -2,6 +2,25 @@ from collections import Counter
 import bmesh
 import itertools
 
+def find_partialsurface_to_border( targetobject, border_indexlist ):
+    all_faces_indiceslist = _get_faces_as_indextuples( targetobject )
+    new_faces_indiceslist, new_to_all = _split_surface_at_border( \
+                                                    all_faces_indiceslist )
+    outerstartvertice = border_indexlist[0]
+    innerstartvertice = set( new_to_all.keys() ) \
+                        .difference( all_faces_indiceslist ).pop()
+    vert_to_face = _asdf????ASDF
+    found_surfaces = []
+    for startvertice in ( outerstartvertice, innerstartvertice ):
+        vertlist = _get_all_connected_vertices( startvertice, vert_to_face, \
+                                                    new_faces_indiceslist )
+        filter_faces = _filter_facelist( new_faces_indiceslist, vertlist )
+        if _check_only_one_circle( filter_faces ):
+            found_surfaces.append( vertlist )
+    return found_surfaces
+
+
+
 def find_possible_partialsurfaces_to_border( targetobject, partialsurfaceinfo ):
     rightup, leftup, leftdown, rightdown, border_indices\
             = _extract_info_from_partialsurfaceinfo( targetobject, \
