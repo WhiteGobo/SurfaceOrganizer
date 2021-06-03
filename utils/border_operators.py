@@ -10,16 +10,24 @@ class _add_new_border:
         index = allinfo.active_surface_index
         partsurf_info = allinfo.partial_surface_info[ index ]
 
-        newname = self.create_border_name( partsurf_info )
-        vgroup = targetobject.vertex_groups.new( name = newname )
-        self.set_border_name( partsurf_info, vgroup.name )
-        _add_vertices_to_vertexgroup( vgroup, targetobject )
+        #newname = self.create_border_name( partsurf_info )
+        #vgroup = targetobject.vertex_groups.new( name = newname )
+        #self.set_border_name( partsurf_info, vgroup.name )
+        #_add_vertices_to_vertexgroup( vgroup, targetobject )
+
+        from . import border_functions as bof
+        selverts = bof.get_thread_from_selected_edges( targetobject )
+        partsurf_info["up_border_indexlist"] = selverts
 
         return {'FINISHED'}
 
     @classmethod
     def poll( cls, context ):
         if context.active_object is None:
+            return False
+        is_in_edgeselectmode = lambda scene: ( False, True, False ) \
+                                == tuple(scene.tool_settings.mesh_select_mode)
+        if not is_in_edgeselectmode( context.scene ):
             return False
         targetobject = context.active_object
         allinfo = targetobject.partial_surface_information
@@ -69,7 +77,6 @@ class add_new_border_down( _add_new_border,bpy.types.Operator ):
         partsurf_info.down_border = name
     def create_border_name( self, partsurf_info ):
         return "down_" + partsurf_info.name
-
 
 class asdf( bpy.types.Operator ):
     bl_idname = "mesh.asdf"

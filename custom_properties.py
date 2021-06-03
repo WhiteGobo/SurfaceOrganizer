@@ -74,6 +74,10 @@ def test_write( self, value ):
 #def _customset(self, value):
 #    self["Name"] = value
 
+#class EdgeItem( bpy.types.PropertyGroup ):
+#    v1: bpy.props.IntProperty( name="first vertice" )
+#    v2: bpy.props.IntProperty( name="second vertice" )
+
 class ListItem( bpy.types.PropertyGroup ):
     """Group of properties representing an item in the list.
     """ 
@@ -104,6 +108,11 @@ class ListItem( bpy.types.PropertyGroup ):
             description = "vertices assigned to downborder", default="" )
     right_border: bpy.props.StringProperty( name = "rightborder Vertexgroup",
             description = "vertices assigned to rightborder", default="" )
+    # Use private_data ['up_border_indexlist'] = [0,1,2] instead
+    #up_border_indexlist: bpy.props.CollectionProperty( type=EdgeItem )
+    #left_border_indexlist: bpy.props.CollectionProperty( type=EdgeItem )
+    #right_border_indexlist: bpy.props.CollectionProperty( type=EdgeItem )
+    #down_border_indexlist: bpy.props.CollectionProperty( type=EdgeItem )
     vertexgroup: bpy.props.StringProperty(
             name = "VertexGroup",
             description = "Vertex Group to partialsurface",
@@ -124,13 +133,17 @@ class partialsurface_list( bpy.types.PropertyGroup ):
     partial_surface_info: bpy.props.CollectionProperty( type=ListItem )
 
 _classes = ( \
+        #EdgeItem, \
         ListItem, \
         partialsurface_list, \
         )
 
 def register():
     for cls in _classes:
-        bpy.utils.register_class( cls )
+        try:
+            bpy.utils.register_class( cls )
+        except Exception as err:
+            raise Exception( cls ) from err
     bpy.types.Object.partial_surface_information = \
                         bpy.props.PointerProperty( type=partialsurface_list )
 

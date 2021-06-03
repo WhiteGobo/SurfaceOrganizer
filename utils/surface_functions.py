@@ -35,6 +35,23 @@ def find_possible_partialsurfaces_to_border( targetobject, partialsurfaceinfo ):
     #return list( _complete_surfaces_verticelist )
 
 
+def _find_border( partialsurfaceinfo, targetobject ):
+    rightup = partialsurfaceinfo.rightup_corner
+    leftup = partialsurfaceinfo.leftup_corner
+    leftdown = partialsurfaceinfo.leftdown_corner
+    rightdown = partialsurfaceinfo.rightdown_corner
+
+    up_group = targetobject.vertex_groups[ partialsurfaceinfo.up_border ].index
+    left_group = targetobject.vertex_groups[ partialsurfaceinfo.left_border ].index
+    down_group = targetobject.vertex_groups[ partialsurfaceinfo.down_border ].index
+    right_group = targetobject.vertex_groups[ partialsurfaceinfo.right_border ].index
+    all_groups = set((up_group, left_group, down_group, right_group))
+    is_in_group = lambda v: all_groups.intersection( [g.group for g in v.groups] ) != set()
+    #contextswitch objectmode
+    border_indices = set(( v.index for v in targetobject.data.vertices \
+                            if is_in_group( v ) ))
+    return rightup, leftup, leftdown, rightdown, border_indices
+
 def _get_faces_as_indextuples( targetobject ):
     workmesh = bmesh.new()
     workmesh.from_mesh( targetobject.data )

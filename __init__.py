@@ -217,35 +217,36 @@ class RegisterError( Exception ):
     pass
 from . import editmodeoperators as edop
 def register():
-    for cls in classes:
+    if bpy.app.version >= (2,93,0):
+        for cls in classes:
+            try:
+                bpy.utils.register_class(cls)
+            except Exception as err:
+                raise RegisterError( cls ) from err
+        #for cls in (edop.AssignRightUpCornerPoint, edop.AssignLeftUpCornerPoint,
+        #        edop.AssignLeftDownCornerPoint, edop.AssignRightDownCornerPoint):
+        #    bpy.utils.register_class( cls )
         try:
-            bpy.utils.register_class(cls)
+            custom_properties.register()
         except Exception as err:
-            raise RegisterError( cls ) from err
-    #for cls in (edop.AssignRightUpCornerPoint, edop.AssignLeftUpCornerPoint,
-    #        edop.AssignLeftDownCornerPoint, edop.AssignRightDownCornerPoint):
-    #    bpy.utils.register_class( cls )
-    try:
-        custom_properties.register()
-    except Exception as err:
-        raise RegisterError( "couldnt register 'custom_properties'" ) from err
-    try:
-        edop.register()
-    except Exception as err:
-        raise RegisterError( "couldnt register 'editmodeoperators'" ) from err
-    try:
-        utils.register()
-    except Exception as err:
-        raise RegisterError( "couldnt register 'utils'" ) from err
+            raise RegisterError( "couldnt register 'custom_properties'" ) from err
+        try:
+            edop.register()
+        except Exception as err:
+            raise RegisterError( "couldnt register 'editmodeoperators'" ) from err
+        try:
+            utils.register()
+        except Exception as err:
+            raise RegisterError( "couldnt register 'utils'" ) from err
 
-    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
-    bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
+        bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
+        bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 
-    from . import graphic
-    try:
-        graphic.register()
-    except Exception as err:
-        raise RegisterError( "couldnt register 'graphic'" ) from err
+        from . import graphic
+        try:
+            graphic.register()
+        except Exception as err:
+            raise RegisterError( "couldnt register 'graphic'" ) from err
 
 
 class UnregisterError( Exception ):
@@ -264,7 +265,7 @@ def unregister():
     from . import graphic
     graphic.unregister()
     utils.unregister()
-    custom_properties.unregister()
+    #custom_properties.unregister()
 
 
 if __name__ == "__main__":

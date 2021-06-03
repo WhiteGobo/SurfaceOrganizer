@@ -82,18 +82,19 @@ class MainPanel(bpy.types.Panel):
         except Exception:
             current_partialsurface = None
         if current_partialsurface is not None:
+            from .utils import border_operators as bod
             row = box.row()
             row.prop( current_partialsurface, "up_border" )
-            row.operator("mesh.add_border_up", text="", icon="ADD" )
+            row.operator( bod.add_new_border_up.bl_idname, text="", icon="ADD" )
             row = box.row()
             row.prop( current_partialsurface, "left_border" )
-            row.operator("mesh.add_border_left", text="", icon="ADD" )
+            row.operator(bod.add_new_border_left.bl_idname, text="", icon="ADD")
             row = box.row()
             row.prop( current_partialsurface, "down_border" )
-            row.operator("mesh.add_border_down", text="", icon="ADD" )
+            row.operator(bod.add_new_border_down.bl_idname, text="", icon="ADD")
             row = box.row()
             row.prop( current_partialsurface, "right_border" )
-            row.operator("mesh.add_border_right", text="", icon="ADD" )
+            row.operator(bod.add_new_border_right.bl_idname, text="",icon="ADD")
             box.prop( current_partialsurface, "vertexgroup" )
         box.operator( "mesh.autocomplete_bordered_partialsurface", \
                         text="autom. surf.complete")

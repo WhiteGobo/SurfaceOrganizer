@@ -30,26 +30,42 @@ logger = logging.getLogger( __name__ )
 
 class test_blender_plyimporter( unittest.TestCase ):
     def setUp( self ):
-        #logging.basicConfig( level=logging.DEBUG )
-        logging.basicConfig( level=logging.CRITICAL )
-        main.unregister()
-        #print( bpy.ops.mesh.assign_rightdowncorner)
-        #raise Exception()
-        main.register()
-
+        #main.unregister()
+        #main.register()
+        pass
 
     def test_border_operators( self ):
-        utils.border_operators
-        pass
+        scene = bpy.data.scenes[ "TestBorderOperators" ]
+        newobj = bpy.data.objects[ "TestBorderOperators" ] 
+        override = { "scene": scene, "active_object": newobj }
+        borop = utils.border_operators
+        bpy.ops.object.mode_set( override, mode='OBJECT' )
+        for e in newobj.data.edges:
+            e.select = (e.index in (0,4,5))
+
+        allinfo = newobj.partial_surface_information
+        index = allinfo.active_surface_index
+        partsurf_info = allinfo.partial_surface_info[ index ]
+        get_bordervertices = lambda: tuple(partsurf_info["up_border_indexlist"])
+        self.assertRaises( KeyError, get_bordervertices )
+
+        scene.tool_settings.mesh_select_mode = (False, True, False)
+        bpy.ops.mesh.add_border_up( override )
+        scene.tool_settings.mesh_select_mode = (True, False, False)
+
+        self.assertEqual( (0,5,4,2), get_bordervertices() )
+
 
     def test_surface_operators( self ):
         scene = bpy.data.scenes[ "TestSurfaceOperators" ]
+        view_layer = scene.view_layers[0]
         #normaluse
         newobj = bpy.data.objects[ "TestSurfaceOperators" ] 
         #scene = newobj.users_scene[0]
         override = { \
-                #"scene":scene, \
+                "scene":scene, \
                 "active_object":newobj, \
+                "view_layer":view_layer, \
                 #"edit_object": newobj, \
                 #"selected_objects":[newobj], \
                 #"selected_active_objects":[ newobj ], \
@@ -71,17 +87,13 @@ class test_blender_plyimporter( unittest.TestCase ):
                 self.assertEqual( grouplist, set() )
 
         newobj = bpy.data.objects[ "TestSurfaceOp_autocompleteStar" ] 
-        override = { \
-                "active_object":newobj, \
-                }
+        override["active_object"] = newobj
         bpy.ops.mesh.autocomplete_bordered_partialsurface( override )
 
         return
 
         newobj = bpy.data.objects[ "TestSurfaceOp_autocomplete4points" ] 
-        override = { \
-                "active_object":newobj, \
-                }
+        override["active_object"] = newobj
         bpy.ops.mesh.autocomplete_bordered_partialsurface( override )
 
 
@@ -194,9 +206,9 @@ class test_blender_plyimporter( unittest.TestCase ):
 
 
     def tearDown( self ):
+        #main.unregister()
         if _main_saveinblenderfile:
             bpy.ops.wm.save_as_mainfile( filepath="test/new.blend" )
-        main.unregister()
 
 def _help_select_single_vertice( override, index ):
     obj = override["active_object"]
@@ -208,7 +220,11 @@ def _help_select_single_vertice( override, index ):
 
 
 if __name__=="__main__":
+    main.unregister()
+    main.register()
+    logging.basicConfig( level=logging.CRITICAL )
     sys.argv = [__file__] \
             + (sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else [])
     unittest.main()
+    main.unregister()
 
