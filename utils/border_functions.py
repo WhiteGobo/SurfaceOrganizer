@@ -3,6 +3,37 @@ import bmesh
 from collections import Counter
 import itertools
 
+def get_border_indexlist( targetobject, startcorner="rightup" ):
+    partsurf_info = _get_active_partial_surface_info( targetobject )
+    startcorner_dict = { \
+                "rightup": ( partsurf_info.rightup_corner, 0 ), \
+                "leftup": ( partsurf_info.rightup_corner, 1 ), \
+                "leftdown": ( partsurf_info.rightup_corner, 2 ), \
+                "rightdown": ( partsurf_info.rightup_corner, 3 ), \
+                }
+    try:
+        startindex, bi = startcorner_dict[ startcorner ]
+    except KeyError as err:
+        raise KeyError( f"startcorner must be one of {startcorner}" ) from err
+    up = partsurf_info["up_border_indexlist"]
+    left = partsurf_info["left_border_indexlist"]
+    down = partsurf_info["down_border_indexlist"]
+    right = partsurf_info["right_border_indexlist"]
+    borderlist = (up, left, down, right)[ bi: ] + (up, left, down, right)[ :bi ]
+    last_vertex_index = startindex
+    for subborder in borderlist:
+        if last_vertex_index == subborder[-1]:
+            subborder = list( reversed( subborder ) )
+        last_vertex_index = subborder[-1]
+        for i in subborder[:-1]:
+            yield i
+
+
+def _get_active_partial_surface_info( targetobject ):
+    allinfo = targetobject.partial_surface_information
+    index = allinfo.active_surface_index 
+    return allinfo.partial_surface_info[ index ]
+
 def get_selected_vertices( targetobject ):
     #assert targetobject.mode == "OBJECT", "targetobject must be in objectmode"
     mode = targetobject.mode
@@ -33,7 +64,7 @@ def get_selected_edges_as_indextuples( targetobject ):
         helpmesh = bmesh.from_edit_mesh( targetobject.data )
         for e in helpmesh.edges:
             if e.select:
-                yield ( e.verts[0], e.verts[1] )
+                yield ( e.verts[0].index, e.verts[1].index )
 
 
 class NotThreadLikeEdgesError( Exception ):

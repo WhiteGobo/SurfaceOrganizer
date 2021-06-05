@@ -1,5 +1,6 @@
 import bpy.types
 from . import surface_functions
+from . import border_functions as bof
 import logging
 logger= logging.getLogger( __name__ )
 
@@ -19,6 +20,22 @@ class NewPartialSurface( bpy.types.Operator ):
         allinfo = targetobject.partial_surface_information
         index = allinfo.active_surface_index 
         partsurf_info = allinfo.partial_surface_info[ index ]
+        #myborder = partsurf_info["up_border_indexlist"]
+        myborder= bof.get_border_indexlist( targetobject, startcorner="rightup")
+        myborder = list( myborder )
+        surfaces = surface_functions.find_partialsurface_to_border( \
+                                                        targetobject, myborder)
+        _onetime = True
+        for surf in surfaces:
+            partsurf_name = "vertices_" + partsurf_info.name + "_auto"
+            vgroup = targetobject.vertex_groups.new( name = partsurf_name )
+            #_select_vertices( targetobject, surf )
+            _add_vertices_to_vertexgroup( vgroup, targetobject, surf )
+            if _onetime:
+                _onetime = False
+                partsurf_info.vertexgroup = vgroup.name
+        return {'FINISHED'}
+
         innersurfs = surface_functions.find_possible_partialsurfaces_to_border(\
                                                 targetobject, partsurf_info )
         innersurfs = list( innersurfs )
@@ -42,7 +59,7 @@ class NewPartialSurface( bpy.types.Operator ):
         targetobject = context.active_object
         allinfo = targetobject.partial_surface_information
         index = allinfo.active_surface_index 
-        if index<0:
+        if index < 0:
             return False
         partsurf_info = allinfo.partial_surface_info[ index ]
         corners = ( partsurf_info.rightup_corner, partsurf_info.leftup_corner, \
@@ -52,13 +69,13 @@ class NewPartialSurface( bpy.types.Operator ):
                 logger.debug( f"{cls.bl_idname}.poll() failed because "\
                                 +"needed all cornerpoints must be defined" )
                 return False
-        borders = ( partsurf_info.up_border, partsurf_info.left_border, \
-                    partsurf_info.down_border, partsurf_info.right_border )
-        for name in borders:
-            if name == "":
-                logger.debug( f"{cls.bl_idname}.poll() failed because "\
-                                +"needed all border must be defined" )
-                return False
+        #borders = ( partsurf_info.up_border, partsurf_info.left_border, \
+        #            partsurf_info.down_border, partsurf_info.right_border )
+        #for name in borders:
+        #    if name == "":
+        #        logger.debug( f"{cls.bl_idname}.poll() failed because "\
+        #                        +"needed all border must be defined" )
+        #        return False
         return True
 
 def _select_vertices( targetobject, indexlist ):

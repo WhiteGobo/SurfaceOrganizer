@@ -18,6 +18,7 @@ class _add_new_border:
 
         selverts = bof.get_thread_from_selected_edges( targetobject )
         #partsurf_info["up_border_indexlist"] = selverts
+
         partsurf_info[ self.vertices_index_border_name ] = selverts
 
         return {'FINISHED'}
@@ -102,7 +103,10 @@ class asdf( bpy.types.Operator ):
         allinfo = targetobject.partial_surface_information
         partsurf_info = allinfo.partial_surface_info[ index ]
         first, second = cls.get_cornerindices( partsurf_info )
-        lenvertices = len( allinfo.partial_surface_info )
+        try:
+            lenvertices = len( allinfo.partial_surface_info )
+        except Exception as err:
+            raise Exception( "brubru" ) from err
         if not all( first < 0, first > lenvertices,
                     second < 0, second > lenvertices):
             return False

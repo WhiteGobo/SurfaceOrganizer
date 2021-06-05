@@ -5,21 +5,106 @@ import itertools
 def find_partialsurface_to_border( targetobject, border_indexlist ):
     all_faces_indiceslist = _get_faces_as_indextuples( targetobject )
     new_faces_indiceslist, new_to_all = _split_surface_at_border( \
-                                                    all_faces_indiceslist )
+                                        border_indexlist, all_faces_indiceslist)
     outerstartvertice = border_indexlist[0]
     innerstartvertice = set( new_to_all.keys() ) \
                         .difference( all_faces_indiceslist ).pop()
-    vert_to_face = _asdf????ASDF
+    vert_to_face = _get_verttoface_dict( new_faces_indiceslist )
     found_surfaces = []
     for startvertice in ( outerstartvertice, innerstartvertice ):
         vertlist = _get_all_connected_vertices( startvertice, vert_to_face, \
                                                     new_faces_indiceslist )
         filter_faces = _filter_facelist( new_faces_indiceslist, vertlist )
+        filter_faces = list( filter_faces )
         if _check_only_one_circle( filter_faces ):
             found_surfaces.append( vertlist )
     return found_surfaces
 
+def _filter_facelist( faces_indiceslist, vertlist ):
+    for face in faces_indiceslist:
+        if set( face ).intersection( vertlist ) != set():
+            yield face
 
+def _check_only_one_circle( filter_faces ):
+    connected_verticesets = []
+    vertice_use = Counter()
+    for edge in _yield_edges( filter_faces ):
+        vertice_use.update( edge )
+        asdf = [ vertsets for vertsets in connected_verticesets \
+                    if vertsets.intersection( edge ) ]
+        if len( asdf ) == 0:
+            connected_verticesets.append( set( edge ) )
+        elif len( asdf ) == 1:
+            asdf[0].update( edge )
+        elif len( asdf ) == 2:
+            asdf[0].update( asdf[1] )
+            connected_verticesets.remove( asdf[1] )
+    try:
+        return all((\
+                min( vertice_use.values() ) >= 2, \
+                len( connected_verticesets ) == 1, \
+                ))
+    except ValueError: #min used on empty vertice_use.values()
+        return False
+    
+
+class NoPossibleSurfaceFromBorder( Exception ):
+    pass
+
+def _split_surface_at_border( border_indexlist, all_faces_indiceslist ):
+    vert_to_face = _get_verttoface_dict( all_faces_indiceslist )
+    startfaces = vert_to_face[ border_indexlist[0] ]
+    nextfaces = vert_to_face[ border_indexlist[1] ]
+    # There could be only one neighbouring face, so then i use 'None' as second 
+    neighbourfaces = [ face for face in nextfaces if face in startfaces ]+[None]
+    lastfaces = nextfaces
+    facelistright, facelistleft = [neighbourfaces[0]], [neighbourfaces[1]]
+    for v in border_indexlist[2:]:
+        nextfaces = vert_to_face[ border_indexlist[1] ]
+        neighbourfaces = [ face for face in nextfaces if face in lastfaces ]
+        lastfaces = nextfaces
+        try:
+            A = neighbourfaces[0]
+        except IndexError as err:
+            raise NoPossibleSurfaceFromBorder( "Closed Surface with border "
+                                            "only possible if on border every"
+                                            "edge has adjacent face" ) from err
+        try:
+            B = neighbourfaces[1]
+        except IndexError:
+            B = None
+        if _are_neighbours( A, facelistright[-1] ):
+            #facelistleft.append( B )
+            facelistright.append( A )
+        else:
+            #facelistleft.append( A )
+            facelistright.append( B )
+    
+    new_to_all = { v:v for v in itertools.chain( *all_faces_indiceslist ) }
+    startindex = max( new_to_all.keys() ) + 1
+    nextindex = iter( range( startindex+1, startindex+1+len(border_indexlist)) )
+    border_to_new = { v: nextindex.__next__() for v in border_indexlist }
+    new_to_all.update( { b:a for a,b in border_to_new.items() } )
+    new_faces_indiceslist = [ face for face in all_faces_indiceslist \
+                                if face not in facelistright ]
+    get_newindex = lambda index: border_to_new.get( index, index )
+    for face in facelistright:
+        if face is not None:
+            new_faces_indiceslist.append( [ get_newindex(index) \
+                                            for index in face ])
+    return new_faces_indiceslist, new_to_all
+
+def _are_neighbours( face1, face2 ):
+    return 2 <= len( set( face1 ).intersection( face2 ) )
+
+def _get_all_connected_vertices( startvertice, vert_to_face, \
+                                                    new_faces_indiceslist ):
+    vertlist = [ startvertice ]
+    for vert in vertlist:
+        for face in vert_to_face.get( vert, list() ):
+            new_verts = set( face ).difference( vertlist )
+            vertlist.extend( new_verts )
+    return vertlist
 
 def find_possible_partialsurfaces_to_border( targetobject, partialsurfaceinfo ):
     rightup, leftup, leftdown, rightdown, border_indices\
