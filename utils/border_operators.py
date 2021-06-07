@@ -11,16 +11,8 @@ class _add_new_border:
         index = allinfo.active_surface_index
         partsurf_info = allinfo.partial_surface_info[ index ]
 
-        #newname = self.create_border_name( partsurf_info )
-        #vgroup = targetobject.vertex_groups.new( name = newname )
-        #self.set_border_name( partsurf_info, vgroup.name )
-        #_add_vertices_to_vertexgroup( vgroup, targetobject )
-
         selverts = bof.get_thread_from_selected_edges( targetobject )
-        #partsurf_info["up_border_indexlist"] = selverts
-
         partsurf_info[ self.vertices_index_border_name ] = selverts
-
         return {'FINISHED'}
 
     @classmethod
@@ -39,52 +31,24 @@ class _add_new_border:
         if index < 0:
             return False
         partsurf_info = allinfo.partial_surface_info[ index ]
-        return cls.get_border_name( partsurf_info ) == ""
+        return True
 
 class add_new_border_right( _add_new_border,bpy.types.Operator ):
     bl_idname = "mesh.add_border_right"
     bl_label = "Add border right"
     vertices_index_border_name = "right_border_indexlist"
-    @classmethod
-    def get_border_name( cls, partsurf_info ):
-        return partsurf_info.right_border
-    def set_border_name( self, partsurf_info, name ):
-        partsurf_info.right_border = name
-    def create_border_name( self, partsurf_info ):
-        return "right_" + partsurf_info.name
 class add_new_border_up( _add_new_border,bpy.types.Operator ):
     bl_idname = "mesh.add_border_up"
     bl_label = "Add border up"
     vertices_index_border_name = "up_border_indexlist"
-    @classmethod
-    def get_border_name( cls, partsurf_info ):
-        return partsurf_info.up_border
-    def set_border_name( self, partsurf_info, name ):
-        partsurf_info.up_border = name
-    def create_border_name( self, partsurf_info ):
-        return "up_" + partsurf_info.name
 class add_new_border_left( _add_new_border,bpy.types.Operator ):
     bl_idname = "mesh.add_border_left"
     bl_label = "Add border left"
     vertices_index_border_name = "left_border_indexlist"
-    @classmethod
-    def get_border_name( cls, partsurf_info ):
-        return partsurf_info.left_border
-    def set_border_name( self, partsurf_info, name ):
-        partsurf_info.left_border = name
-    def create_border_name( self, partsurf_info ):
-        return "left_" + partsurf_info.name
 class add_new_border_down( _add_new_border,bpy.types.Operator ):
     bl_idname = "mesh.add_border_down"
     bl_label = "Add border down"
     vertices_index_border_name = "down_border_indexlist"
-    @classmethod
-    def get_border_name( cls, partsurf_info ):
-        return partsurf_info.down_border
-    def set_border_name( self, partsurf_info, name ):
-        partsurf_info.down_border = name
-    def create_border_name( self, partsurf_info ):
-        return "down_" + partsurf_info.name
 
 class asdf( bpy.types.Operator ):
     bl_idname = "mesh.asdf"

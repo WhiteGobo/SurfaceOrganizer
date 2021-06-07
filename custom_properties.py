@@ -100,14 +100,14 @@ class ListItem( bpy.types.PropertyGroup ):
     rightdown_corner: bpy.props.IntProperty(
             name="rightdown corner",
             default=-1 )
-    up_border: bpy.props.StringProperty( name = "upborder Vertexgroup",
-            description = "vertices assigned to upborder", default="" )
-    left_border: bpy.props.StringProperty( name = "leftborder Vertexgroup",
-            description = "vertices assigned to leftborder", default="" )
-    down_border: bpy.props.StringProperty( name = "downborder Vertexgroup",
-            description = "vertices assigned to downborder", default="" )
-    right_border: bpy.props.StringProperty( name = "rightborder Vertexgroup",
-            description = "vertices assigned to rightborder", default="" )
+    #up_border: bpy.props.StringProperty( name = "upborder Vertexgroup",
+    #        description = "vertices assigned to upborder", default="" )
+    #left_border: bpy.props.StringProperty( name = "leftborder Vertexgroup",
+    #        description = "vertices assigned to leftborder", default="" )
+    #down_border: bpy.props.StringProperty( name = "downborder Vertexgroup",
+    #        description = "vertices assigned to downborder", default="" )
+    #right_border: bpy.props.StringProperty( name = "rightborder Vertexgroup",
+    #        description = "vertices assigned to rightborder", default="" )
     # Use private_data ['up_border_indexlist'] = [0,1,2] instead
     #up_border_indexlist: bpy.props.CollectionProperty( type=EdgeItem )
     #left_border_indexlist: bpy.props.CollectionProperty( type=EdgeItem )

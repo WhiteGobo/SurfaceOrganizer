@@ -84,17 +84,17 @@ class MainPanel(bpy.types.Panel):
         if current_partialsurface is not None:
             from .utils import border_operators as bod
             row = box.row()
-            row.prop( current_partialsurface, "up_border" )
-            row.operator( bod.add_new_border_up.bl_idname, text="", icon="ADD" )
+            row.operator( bod.add_new_border_up.bl_idname, \
+                                        text="Assign upborder")
             row = box.row()
-            row.prop( current_partialsurface, "left_border" )
-            row.operator(bod.add_new_border_left.bl_idname, text="", icon="ADD")
+            row.operator(bod.add_new_border_left.bl_idname, \
+                                        text="Assign leftborder")
             row = box.row()
-            row.prop( current_partialsurface, "down_border" )
-            row.operator(bod.add_new_border_down.bl_idname, text="", icon="ADD")
+            row.operator(bod.add_new_border_down.bl_idname, \
+                                        text="Assign downborder")
             row = box.row()
-            row.prop( current_partialsurface, "right_border" )
-            row.operator(bod.add_new_border_right.bl_idname, text="",icon="ADD")
+            row.operator(bod.add_new_border_right.bl_idname, \
+                                        text="Assign rightborder")
             box.prop( current_partialsurface, "vertexgroup" )
         box.operator( "mesh.autocomplete_bordered_partialsurface", \
                         text="autom. surf.complete")

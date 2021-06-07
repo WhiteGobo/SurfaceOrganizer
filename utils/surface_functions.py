@@ -1,14 +1,16 @@
 from collections import Counter
 import bmesh
 import itertools
+import logging
+logger = logging.getLogger( __name__ )
 
 def find_partialsurface_to_border( targetobject, border_indexlist ):
     all_faces_indiceslist = _get_faces_as_indextuples( targetobject )
     new_faces_indiceslist, new_to_all = _split_surface_at_border( \
                                         border_indexlist, all_faces_indiceslist)
     outerstartvertice = border_indexlist[0]
-    innerstartvertice = set( new_to_all.keys() ) \
-                        .difference( all_faces_indiceslist ).pop()
+    innerstartvertice = { b:a for a, b in new_to_all.items() \
+                        if b not in all_faces_indiceslist }[outerstartvertice]
     vert_to_face = _get_verttoface_dict( new_faces_indiceslist )
     found_surfaces = []
     for startvertice in ( outerstartvertice, innerstartvertice ):
@@ -17,7 +19,8 @@ def find_partialsurface_to_border( targetobject, border_indexlist ):
         filter_faces = _filter_facelist( new_faces_indiceslist, vertlist )
         filter_faces = list( filter_faces )
         if _check_only_one_circle( filter_faces ):
-            found_surfaces.append( vertlist )
+            old_vertlist = [ new_to_all.get( v, v ) for v in vertlist ]
+            found_surfaces.append( old_vertlist )
     return found_surfaces
 
 def _filter_facelist( faces_indiceslist, vertlist ):
@@ -28,28 +31,140 @@ def _filter_facelist( faces_indiceslist, vertlist ):
 def _check_only_one_circle( filter_faces ):
     connected_verticesets = []
     vertice_use = Counter()
+    edge_use = Counter()
     for edge in _yield_edges( filter_faces ):
         vertice_use.update( edge )
-        asdf = [ vertsets for vertsets in connected_verticesets \
-                    if vertsets.intersection( edge ) ]
-        if len( asdf ) == 0:
-            connected_verticesets.append( set( edge ) )
-        elif len( asdf ) == 1:
-            asdf[0].update( edge )
-        elif len( asdf ) == 2:
-            asdf[0].update( asdf[1] )
-            connected_verticesets.remove( asdf[1] )
+        edge_use.update( [ frozenset( edge ) ] )
     try:
-        return all((\
-                min( vertice_use.values() ) >= 2, \
-                len( connected_verticesets ) == 1, \
-                ))
+        if min( vertice_use.values() ) < 2:
+            return False
     except ValueError: #min used on empty vertice_use.values()
         return False
+
+    for edge, uses in edge_use.items():
+        if uses == 1:
+            asdf = [ vertsets for vertsets in connected_verticesets \
+                        if vertsets.intersection( edge ) ]
+            if len( asdf ) == 0:
+                connected_verticesets.append( set( edge ) )
+            elif len( asdf ) == 1:
+                asdf[0].update( edge )
+            elif len( asdf ) == 2:
+                asdf[0].update( asdf[1] )
+                connected_verticesets.remove( asdf[1] )
+    return len( connected_verticesets ) == 1
     
 
 class NoPossibleSurfaceFromBorder( Exception ):
     pass
+
+def _fill_facelist_with_adjacent_faces( firstface, secondface, faces ):
+    """
+    As source uses set of faces which connect at 1 vertice.
+    uses startfacelist of two faces which are adjacent to one another
+    if all faces connect to 1 point and this is a regular surface in each step
+    only one face can be added to the facelist
+    """
+    #assert all( type(face)==tuple for face in faces ), "faces must be tuples"
+    are_adjacent = lambda x, y: len( set(x).intersection( y ) ) == 2
+    order_faces = [ firstface ]
+    nextface = secondface
+    not_used_faces = set(faces).difference( order_faces )
+    while nextface is not None:
+        neighs = [ face for face in not_used_faces \
+                    if are_adjacent( nextface, face ) ]
+        not_used_faces.discard( nextface )
+        order_faces.append( nextface )
+        try:
+            nextface = neighs[0]
+        except IndexError:
+            break
+    return order_faces
+
+def _get_left_and_right_face_to_edge( nextfaces, lastfaces, border_indexlist, \
+                                        lastleft, lastright ):
+                                        #facelistleft, facelistright ):
+    #neighbourfaces are the next possibly two faces to choose from
+    neighbourfaces = [ face for face in nextfaces if face in lastfaces ]
+
+    firstface, secondface = lastleft, lastright
+    if secondface is not None:
+        order_faces = _fill_facelist_with_adjacent_faces( firstface,secondface,\
+                                                                    lastfaces )
+        if all( face in order_faces for face in neighbourfaces ):
+            if any( face in (lastleft, ) for face in neighbourfaces ):
+                neighbourfaces.sort( key=order_faces.index, reverse=True )
+            else:
+                neighbourfaces.sort( key=order_faces.index )
+            neighbourfaces.append( None ) # left can be not existent
+            right, left = neighbourfaces[0], neighbourfaces[1]
+            maxrightindex = order_faces.index( right )
+            minrightindex = order_faces.index( lastright )
+            righties = order_faces[ minrightindex : maxrightindex+1 ]
+            lefties = set( lastfaces ).difference( righties )
+            return lefties, righties, left, right
+
+    firstface, secondface = lastright, lastleft
+    if secondface is not None:
+        order_faces = _fill_facelist_with_adjacent_faces( firstface,secondface,\
+                                                                    lastfaces )
+        if all( face in order_faces for face in neighbourfaces ):
+            if any( face in (lastright, ) for face in neighbourfaces ):
+                neighbourfaces.sort( key=order_faces.index, reverse=True )
+            else:
+                neighbourfaces.sort( key=order_faces.index )
+            neighbourfaces.append( None ) # right can be not existent
+            left, right = neighbourfaces[0], neighbourfaces[1]
+            maxleftindex = order_faces.index( left )
+            minleftindex = order_faces.index( lastleft )
+            lefties = order_faces[ minleftindex : maxleftindex+1 ]
+            righties = set( lastfaces ).difference( lefties )
+            return lefties, righties, left, right
+    raise NoPossibleSurfaceFromBorder( "Surface has holes along the border on"\
+                                    "each side. Cant find surface withoutholes")
+
+
+    qq_neighbour = lambda x, y: len( set(x).intersection( y ) ) == 2
+    #get faces clockwise
+    asdf = [ facelistleft[-1], facelistright[-1] ]
+    asdf2 = [ set(face) for face in asdf if face is not None ]
+    clockwise = True
+    while not all( set( face ) in asdf2 for face in neighbourfaces ):
+        neighs = [ face for face in lastfaces \
+                    if set(face) not in asdf2 \
+                    and qq_neighbour( asdf[-1], face ) ]
+        if len( neighs ) == 1:
+            asdf.append( neighs[0] )
+            asdf2.append( set(neighs[0]) )
+        else:
+            break
+    if not all( set(face) in asdf2 for face in neighbourfaces ):
+        clockwise = False
+        asdf = [ facelistright[-1], facelistleft[-1] ]
+        asdf2 = [ set(face) for face in asdf if face is not None ]
+        while not all( set( face ) in asdf2 for face in neighbourfaces ):
+            neighs = [ face  for face in lastfaces \
+                        if set(face) not in asdf2 \
+                        and qq_neighbour( asdf[-1], face ) ]
+            if len( neighs ) == 1:
+                asdf.append( neighs[0] )
+                asdf2.append( set(neighs[0]) )
+            else:
+                break
+    if not all( set(face) in asdf2 for face in neighbourfaces ):
+        raise Exception( asdf2, neighbourfaces )
+    neighbours_as_faces = [ set(face) for face in neighbourfaces \
+                            if face is not None ]
+    asdf = [ face for face in asdf if face is not None ]
+    returnarray = [ face for face in asdf \
+                    if set(face) in neighbours_as_faces ] + [None]
+    if clockwise:
+        return returnarray[1], returnarray[0]
+    else:
+        return returnarray[0], returnarray[1]
+    #raise NoPossibleSurfaceFromBorder( "Closed Surface with border "
+    #                                    "only possible if on border every"
+    #                                    "edge has adjacent face" ) from err
 
 def _split_surface_at_border( border_indexlist, all_faces_indiceslist ):
     vert_to_face = _get_verttoface_dict( all_faces_indiceslist )
@@ -58,27 +173,19 @@ def _split_surface_at_border( border_indexlist, all_faces_indiceslist ):
     # There could be only one neighbouring face, so then i use 'None' as second 
     neighbourfaces = [ face for face in nextfaces if face in startfaces ]+[None]
     lastfaces = nextfaces
-    facelistright, facelistleft = [neighbourfaces[0]], [neighbourfaces[1]]
-    for v in border_indexlist[2:]:
-        nextfaces = vert_to_face[ border_indexlist[1] ]
-        neighbourfaces = [ face for face in nextfaces if face in lastfaces ]
+    lastleft, lastright = neighbourfaces[0], neighbourfaces[1]
+    facelistleft, facelistright = [lastleft], [lastright]
+    for v in border_indexlist[2:]+border_indexlist[:1]:
+        nextfaces = vert_to_face[ v ]
+        leftface, rightface, lastleft, lastright \
+                            = _get_left_and_right_face_to_edge( nextfaces, \
+                                                lastfaces, border_indexlist, \
+                                                lastleft, lastright )
         lastfaces = nextfaces
-        try:
-            A = neighbourfaces[0]
-        except IndexError as err:
-            raise NoPossibleSurfaceFromBorder( "Closed Surface with border "
-                                            "only possible if on border every"
-                                            "edge has adjacent face" ) from err
-        try:
-            B = neighbourfaces[1]
-        except IndexError:
-            B = None
-        if _are_neighbours( A, facelistright[-1] ):
-            #facelistleft.append( B )
-            facelistright.append( A )
-        else:
-            #facelistleft.append( A )
-            facelistright.append( B )
+        facelistleft.extend( leftface )
+        facelistright.extend( rightface )
+    facelistleft = list( set(facelistleft))
+    facelistright = list( set(facelistright))
     
     new_to_all = { v:v for v in itertools.chain( *all_faces_indiceslist ) }
     startindex = max( new_to_all.keys() ) + 1
@@ -90,8 +197,8 @@ def _split_surface_at_border( border_indexlist, all_faces_indiceslist ):
     get_newindex = lambda index: border_to_new.get( index, index )
     for face in facelistright:
         if face is not None:
-            new_faces_indiceslist.append( [ get_newindex(index) \
-                                            for index in face ])
+            new_faces_indiceslist.append( tuple( get_newindex(index) \
+                                            for index in face ))
     return new_faces_indiceslist, new_to_all
 
 def _are_neighbours( face1, face2 ):
