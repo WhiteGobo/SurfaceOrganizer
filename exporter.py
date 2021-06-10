@@ -12,6 +12,7 @@ from bpy_extras.io_utils import (
     orientation_helper,
 )
 import logging
+from .utils import border_operators as bop
 logger = logging.getLogger( __name__ )
 
 class MyImportPLY(bpy.types.Operator, ImportHelper):
@@ -116,12 +117,31 @@ class MyExportPLY(bpy.types.Operator, ExportHelper):
 
     @classmethod
     def poll( self, context ):
-        return len( context.selected_objects ) == 1
-        conditions = ( \
-                #context.space_data is not None, \
-                len( context.selected_objects ) == 1, \
-                )
-        return all( conditions )
+        targetobject = context.active_object
+        if targetobject is None:
+            return False
+        allinfo = targetobject.partial_surface_information
+        if len(allinfo.partial_surface_info) < 1:
+            return False
+        for partsurf_info in allinfo.partial_surface_info:
+            corners = ( partsurf_info.rightup_corner, \
+                    partsurf_info.leftup_corner, \
+                    partsurf_info.leftdown_corner, \
+                    partsurf_info.rightdown_corner )
+            for corn in corners:
+                if corn < 0:
+                    return False
+            borders = ( \
+                    bop.add_new_border_up.vertices_index_border_name, \
+                    bop.add_new_border_left.vertices_index_border_name, \
+                    bop.add_new_border_down.vertices_index_border_name, \
+                    bop.add_new_border_right.vertices_index_border_name, \
+                    )
+            for bordname in borders:
+                if bordname not in partsurf_info:
+                    logger.critical(f"asdf2 {bordname}, {partsurf_info.name}, {partsurf_info.keys()}, {targetobject}")
+                    return False
+        return True
 
 
 class PLY_PT_export_transform(bpy.types.Panel):

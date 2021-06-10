@@ -63,7 +63,6 @@ class test_blender_plyimporter( unittest.TestCase ):
         self.assertEqual( (0,5,4,2), get_bordervertices() )
 
 
-
     def test_surface_operators( self ):
         scene = bpy.data.scenes[ "TestSurfaceOperators" ]
         view_layer = scene.view_layers[0]
@@ -105,6 +104,7 @@ class test_blender_plyimporter( unittest.TestCase ):
 
 
     def test_load_ascii( self ):
+        return
         #scene = bpy.data.scenes["TestLoadSurface"]
         #scene = bpy.data.scenes[ "TestSurfaceOperators" ]
         #override = { "scene": scene }
@@ -122,6 +122,7 @@ class test_blender_plyimporter( unittest.TestCase ):
                                                 use_selection = True )
 
     def test_save_ascii( self ):
+        return
         newobj = bpy.data.objects[ "PreparedWithBorderCube" ] 
         scene = bpy.data.scenes[ "Scene" ]
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -132,6 +133,7 @@ class test_blender_plyimporter( unittest.TestCase ):
                                                 use_selection = True )
 
     def test_save_ascii_multiplesurfaces( self ):
+        return
         newobj = bpy.data.objects["PreparedWithMultipleSurfaces"] 
         scene = bpy.data.scenes["test_save_ascii_multiplesurfaces"]
         override = { "selected_objects":[newobj] }
@@ -158,6 +160,7 @@ class test_blender_plyimporter( unittest.TestCase ):
 
 
     def test_load_ascii_multiplesurfaces( self ):
+        return
         scene = bpy.data.scenes["test_load_ascii_multiplesurfaces"]
         override = { "scene": scene }
         with importlib.resources.path( testdirectory1, "multiplesurface.ply" ) \
@@ -185,16 +188,29 @@ class test_blender_plyimporter( unittest.TestCase ):
         override = {"scene":scene, "selected_objects":[obj], \
                     "active_object":obj, "selected_active_objects":[obj]}
         mode = obj.mode
+        toolmode = scene.tool_settings.mesh_select_mode
         bpy.ops.object.mode_set( override, mode='EDIT' )
-        _help_select_single_vertice( override, 0 )
-        bpy.ops.mesh.assign_rightupcorner( override )
-        _help_select_single_vertice( override, 1 )
-        bpy.ops.mesh.assign_leftupcorner( override )
+        scene.tool_settings.mesh_select_mode = (True, False, False)#verticemode
         _help_select_single_vertice( override, 2 )
+        bpy.ops.mesh.assign_rightupcorner( override )
+        _help_select_single_vertice( override, 0 )
+        bpy.ops.mesh.assign_leftupcorner( override )
+        _help_select_single_vertice( override, 1 )
         bpy.ops.mesh.assign_leftdowncorner( override )
         _help_select_single_vertice( override, 3 )
         bpy.ops.mesh.assign_rightdowncorner( override )
+        scene.tool_settings.mesh_select_mode = (False, True, False) #edgemode
+        _help_select_edgelist( override, [3, 16, 17, 18, 19] ) #2-3
+        bpy.ops.mesh.add_border_right( override )
+        _help_select_edgelist( override, [2, 12, 13, 14, 15] ) #1-3
+        bpy.ops.mesh.add_border_down( override )
+        _help_select_edgelist( override, [1, 8, 9, 10, 11] ) #1-0
+        bpy.ops.mesh.add_border_left( override )
+        _help_select_edgelist( override, [0, 4, 5, 6, 7] ) #0-2
+        bpy.ops.mesh.add_border_up( override )
+        scene.tool_settings.mesh_select_mode = toolmode
         bpy.ops.object.mode_set( override, mode=mode )
+        bpy.ops.mesh.autocomplete_bordered_partialsurface( override )
         with tempfile.TemporaryDirectory() as tmpdir:
             filepath = os.path.join( tmpdir, "tmpfile.ply" )
             bpy.ops.export_mesh.ply_with_border( override, \
@@ -203,7 +219,7 @@ class test_blender_plyimporter( unittest.TestCase ):
             plyobj = PlyObject.load_from_file( filepath )
             asd = plyobj.get_filtered_data( "cornerrectangle", \
                             ("rightup", "leftup", "leftdown", "rightdown"))
-            self.assertEqual( tuple( asd ), ((0,1,2,3),))
+            self.assertEqual( tuple( asd ), ((2,0,1,3),))
 
             asd = plyobj.get_dataarray( "cornerrectangle", "surfacename" )
             mysurfnames = [ str( bytes(single), encoding="utf8" ) \
@@ -223,6 +239,15 @@ def _help_select_single_vertice( override, index ):
     for i, v in enumerate( obj.data.vertices ):
         v.select = (i==index)
     bpy.ops.object.mode_set( override, mode=mode )
+
+def _help_select_edgelist( override, edgeindexlist ):
+    obj = override["active_object"]
+    mode = obj.mode
+    bpy.ops.object.mode_set( override, mode='OBJECT' )
+    for e in obj.data.edges:
+        e.select = (e.index in edgeindexlist)
+    bpy.ops.object.mode_set( override, mode=mode )
+
 
 
 if __name__=="__main__":
