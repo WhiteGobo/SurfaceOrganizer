@@ -49,6 +49,7 @@ class MainPanel(bpy.types.Panel):
         row.operator("mesh.assign_leftdowncorner", text="left down")
         row.operator("mesh.assign_rightdowncorner", text="right down")
         box = layout.box()
+        box.label(text="Toggle Cornerpoints")
         row = box.row()
         row.operator("mesh.toggle_leftupcorner", text="left up")
         row.operator("mesh.toggle_rightupcorner", text="right up")
@@ -57,7 +58,7 @@ class MainPanel(bpy.types.Panel):
         row.operator("mesh.toggle_rightdowncorner", text="right down")
 
         box = layout.box()
-        box.label(text="SecondBox")
+        box.label(text="Surfacename")
         #box.prop( qwer, "brubru", slider=True )
         #box.prop( bpy.types.Scene.brubrusettings, "my_settings" )
         obj = context.active_object
@@ -79,25 +80,32 @@ class MainPanel(bpy.types.Panel):
         index = obj.partial_surface_information.active_surface_index
         try:
             current_partialsurface = partlist[ index ]
-        except Exception:
-            current_partialsurface = None
-        if current_partialsurface is not None:
             from .utils import border_operators as bod
+            box.label( text="borderutils" )
             row = box.row()
-            row.operator( bod.add_new_border_up.bl_idname, \
-                                        text="Assign upborder")
-            row = box.row()
-            row.operator(bod.add_new_border_left.bl_idname, \
-                                        text="Assign leftborder")
-            row = box.row()
-            row.operator(bod.add_new_border_down.bl_idname, \
-                                        text="Assign downborder")
-            row = box.row()
-            row.operator(bod.add_new_border_right.bl_idname, \
-                                        text="Assign rightborder")
+            upcolumn = row.column( heading="upborder")
+            upcolumn.label( text="up")
+            upcolumn.operator( bod.add_new_border_up.bl_idname, \
+                                        text="Select")
+            upcolumn.operator( bod.add_new_border_up.bl_idname, \
+                                        text="Assign")
+            leftcolumn = row.column()
+            leftcolumn.label( text="left")
+            leftcolumn.operator(bod.add_new_border_left.bl_idname, \
+                                        text="Assign")
+            downcolumn = row.column()
+            downcolumn.label( text="down")
+            downcolumn.operator(bod.add_new_border_down.bl_idname, \
+                                        text="Assign")
+            rightcolumn = row.column()
+            rightcolumn.label( text="right")
+            rightcolumn.operator(bod.add_new_border_right.bl_idname, \
+                                        text="Assign")
             box.prop( current_partialsurface, "vertexgroup" )
-        box.operator( "mesh.autocomplete_bordered_partialsurface", \
-                        text="autom. surf.complete")
+            box.operator( "mesh.autocomplete_bordered_partialsurface", \
+                                        text="autom. surf.complete")
+        except Exception:
+            pass
 
 
     #@classmethod
