@@ -33,17 +33,6 @@ def save( blenderobject, filepath, global_matrix, use_ascii ):
     vertices, edges, faces = get_vertices_edges_faces_from_blenderobject( \
                                             blenderobject, global_matrix )
     infodict_all = get_all_partialsurfaceinfo( blenderobject )
-    infodict_all = list( infodict_all )
-    cornlist =(RIGHTUP_CORNER, LEFTUP_CORNER, LEFTDOWN_CORNER,RIGHTDOWN_CORNER)
-    cornerdata = tuple( \
-                        tuple(inf[ corn ] for corn in cornlist ) \
-                        for inf in infodict_all \
-                        )
-    surfacenames = tuple( infodict[ "Name" ] for infodict in infodict_all )
-    extra = {}
-    if "Vertexgroup" in infodict_all[0]:
-        extra["partialsurface_vertices"] = [info[ "Vertexgroup" ] \
-                                            for info in infodict_all ]
 
     surfaces_info = [{ infodict_to_plysurfaceshandler[ a ]:b \
                         for a, b in infodict.items() \
@@ -68,53 +57,6 @@ def save_data( filepath, vertices, faces, surfaces_info:Iterator[dict], \
     qwer = plysurfacehandler.plysurfacehandler( vertices_asdf, faces_asdf, surfaces_asdf )
     qwer.save_to_file( filepath, use_ascii=use_ascii )
 
-
-def get_cornerdata( object ):
-    extras = dict()
-    if "_subrectanglesurfaces" in object.data:
-        tmp = object.data[ "_subrectanglesurfaces" ]
-        #extras["surfacenames"] = tmp
-        tmpsurfacenames = tmp
-        create_filter = lambda name: lambda vgroup: name == vgroup.name
-        #extras["used_vertices"] = [\
-        used_vertices = [\
-                filter( create_filter(surf), iter(object.vertex_groups)) \
-                for surf in tmp ]
-        del( tmp, create_filter )
-    else:
-        tmpsurfacenames = (None,)
-    cornerdata = []
-    targetobject = object
-    from .custom_properties import get_all_partialsurfaceinfo
-    from .surfacedivide import RIGHTUP_CORNER, LEFTUP_CORNER, \
-                                LEFTDOWN_CORNER, RIGHTDOWN_CORNER
-    for partialsurface_info in get_all_partialsurfaceinfo( targetobject ):
-        name = partialsurface_info["Name"]
-        rightup = partialsurface_info[ RIGHTUP_CORNER ]
-        leftup = partialsurface_info[ LEFTUP_CORNER ]
-        leftdown = partialsurface_info[ LEFTDOWN_CORNER ]
-        rightdown = partialsurface_info[ RIGHTDOWN_CORNER ]
-    for groupname in tmpsurfacenames:
-        if groupname is not None:
-            rightup, leftup, leftdown, rightdown \
-                    = [ "_".join((groupname, direction)) \
-                    for direction in (RIGHTUP, LEFTUP, LEFTDOWN, RIGHTDOWN)]
-        else:
-            rightup, leftup, leftdown, rightdown \
-                    = RIGHTUP, LEFTUP, LEFTDOWN, RIGHTDOWN
-        try:
-            rightup, = get_vertices_of_vertexgroup( object, rightup )
-            leftup, = get_vertices_of_vertexgroup( object, leftup )
-            rightdown, = get_vertices_of_vertexgroup( object, rightdown )
-            leftdown, = get_vertices_of_vertexgroup( object, leftdown )
-        except KeyError as err:
-            raise SurfaceNotCorrectInitiated( f"Tried to export Surface from "\
-                                +"Object with not correct initiated "\
-                                +f"surfacedata. Object: {object}" ) from err
-        cornerdata.append((leftup, rightup, rightdown, leftdown))
-    if tmpsurfacenames == (None,):
-        cornerdata = cornerdata[0]
-    return cornerdata, tmpsurfacenames
 
 def get_vertices_of_vertexgroup( object, groupname ):
     groupindex = object.vertex_groups[ groupname ].index

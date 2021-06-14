@@ -1,6 +1,6 @@
-#import bpy
+import bpy.path
+import bpy.data
 import itertools
-#from .plyhandler import ObjectSpec as PlyObject
 import logging
 from .exceptions import InvalidPlyDataForSurfaceobject
 logger = logging.getLogger( __name__ )
@@ -18,19 +18,14 @@ def load_ply( filepath, collection, view_layer ):
     :param collection: context.collection from blenderoperator
     :param view_layer: context.view_layer from blenderoperator
     """
-    import bpy
-    #filename = "/home/hfechner/tmp.ply"
-    #filename = "/home/hfechner/meshfortests.ply"
     ply_name = bpy.path.display_name_from_filepath( filepath )
     meshname = ply_name
     objectname = ply_name
 
-    #vertexlist, faces, rightup, leftup, leftdown, rightdown \
     vertexlist, faces, borders, bordernames = load_meshdata_from_ply( filepath )
 
     generate_blender_object( meshname, objectname, vertexlist, faces, \
                                         borders, bordernames, \
-                                        #rightup, leftup, leftdown, rightdown, \
                                         collection, view_layer )
     return {'FINISHED'}
 
@@ -60,13 +55,11 @@ def extract_vertex_positions( blender_obj_info ):
 
 def generate_blender_object( meshname, objectname, vertices_list, faces, \
                                         borders, bordernames, \
-                                        #rightup, leftup, leftdown, rightdown, \
                                         collection, view_layer ):
     """
     :todo: setting view_layer.objects.active seems to have strange interactions
             with other parts of the program
     """
-    import bpy
     mymesh = generate_mesh( vertices_list, faces, meshname )
 
     obj = bpy.data.objects.new( objectname, mymesh )
@@ -90,7 +83,6 @@ def generate_blender_object( meshname, objectname, vertices_list, faces, \
 
 
 def generate_mesh( vertices_list, faces, meshname ):
-    import bpy
     mesh = bpy.data.meshes.new( name=meshname )
     edgelist = [] # if faces are given no edges need to be provided
     mesh.from_pydata( vertices_list, edgelist, faces )
@@ -104,12 +96,3 @@ def create_vertexgroup_with_vertice( obj, vertexgroupname, vertice ):
     weight, add_type = 1, "REPLACE"
     obj.vertex_groups.new( name=vertexgroupname )
     obj.vertex_groups[ vertexgroupname ].add( [vertice], weight, add_type )
-
-
-def _help_select_single_vertice( override, index ):
-    obj = override["active_object"]
-    mode = obj.mode
-    bpy.ops.object.mode_set( override, mode='OBJECT' )
-    for i, v in enumerate( obj.data.vertices ):
-        v.select = (i==index)
-    bpy.ops.object.mode_set( override, mode=mode )

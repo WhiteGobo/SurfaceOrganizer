@@ -75,16 +75,6 @@ def test_write( self, value ):
     parentobject.data[ "_subrectanglesurfaces" ] = surfaces_list
     #self["active_surface"] = value
 
-#def _customget(self):
-#    return self.get("Name", "Untitled")
-#
-#def _customset(self, value):
-#    self["Name"] = value
-
-#class EdgeItem( bpy.types.PropertyGroup ):
-#    v1: bpy.props.IntProperty( name="first vertice" )
-#    v2: bpy.props.IntProperty( name="second vertice" )
-
 class ListItem( bpy.types.PropertyGroup ):
     """Group of properties representing an item in the list.
     """ 
