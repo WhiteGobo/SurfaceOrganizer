@@ -2,6 +2,7 @@
 import itertools
 from .plyhandler import ObjectSpec as PlyObject
 import logging
+from .exceptions import InvalidPlyDataForSurfaceobject
 logger = logging.getLogger( __name__ )
 
 
@@ -26,8 +27,6 @@ def load_ply( filepath, collection, view_layer ):
                                         collection, view_layer )
     return {'FINISHED'}
 
-class InvalidPlyDataForSurfaceobject( Exception ):
-    pass
 
 def load_meshdata_from_ply( filepath ):
     """

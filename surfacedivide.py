@@ -34,6 +34,9 @@ def ensure_partial_surface( targetobject ):
 
 
 def assign_cornerpoint( targetobject, targetvertice, targetcorner ):
+    """
+    :raise: '.exceptions.SurfaceNoActive'
+    """
     assert targetcorner in _CORNERS, f"targetcorner ({targetcorner}) "\
                                         +f"must be one of these: {_CORNERS}"
     allinfo = targetobject.partial_surface_information
@@ -41,7 +44,7 @@ def assign_cornerpoint( targetobject, targetvertice, targetcorner ):
     try:
         surfaceinfo = allinfo.partial_surface_info[ index ]
     except IndexError as err:
-        raise Exception( "no active partialsurface" ) from err
+        raise SurfaceNoActive( "no active partialsurface" ) from err
     surfacename = surfaceinfo.name
 
     vertindex = targetvertice.index

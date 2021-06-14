@@ -1,5 +1,6 @@
 import bpy
 import logging
+from .exceptions import RegisterError, SurfaceNoActive
 logger = logging.getLogger( __name__ )
 
 def get_all_partialsurfaceinfo( targetobject ):
@@ -21,10 +22,13 @@ def get_all_partialsurfaceinfo( targetobject ):
 
 
 def get_corners( targetobject, surfacename=None ):
+    """
+    :raise: 'SurfaceNoActive'
+    """
     if surfacename == None:
         index = allinfo.active_surface_index
         if index < 0:
-            raise Exception( "no active partialsurface" )
+            raise SurfaceNoActive( "no active partialsurface" )
     else:
         index = get_partialsurface_index( targetobject, surfacename )
 
@@ -39,10 +43,13 @@ def get_corners( targetobject, surfacename=None ):
 
 
 def get_partialsurface_index( targetobject, surfacename ):
+    """
+    :raise: 'KeyError' if no surface with name 'surfacename'
+    """
     for surf in allinfo.partial_surface_info:
         if surf.name == surfacename:
             return surf.index
-    raise Exception( f"didnt found surfacename {surfacename}" )
+    raise KeyError( f"No available surface with name {surfacename}" )
 
 
 def test_get( self ):
@@ -143,7 +150,7 @@ def register():
         try:
             bpy.utils.register_class( cls )
         except Exception as err:
-            raise Exception( cls ) from err
+            raise RegisterError( cls ) from err
     bpy.types.Object.partial_surface_information = \
                         bpy.props.PointerProperty( type=partialsurface_list )
 
