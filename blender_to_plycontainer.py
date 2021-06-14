@@ -49,12 +49,11 @@ def save_data( filepath, vertices, faces, surfaces_info:Iterator[dict], \
     vertices_asdf = [ plysurfacehandler.vertex( *v ) for v in vertices ]
     faces_asdf = [ plysurfacehandler.face( f ) for f in faces ]
     surfaces_asdf = []
-    #qqq = infodict_to_plysurfacehandler
     for info in surfaces_info:
-        #inputdict = { qqq[a]: b for a,b in info.items() if a in qqq }
         surfaces_asdf.append( plysurfacehandler.surface( **info, \
                                 faceindices=faces ))
-    qwer = plysurfacehandler.plysurfacehandler( vertices_asdf, faces_asdf, surfaces_asdf )
+    qwer = plysurfacehandler.plysurfacehandler( vertices_asdf, \
+                                                faces_asdf, surfaces_asdf )
     qwer.save_to_file( filepath, use_ascii=use_ascii )
 
 
