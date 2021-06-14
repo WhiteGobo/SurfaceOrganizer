@@ -1,10 +1,17 @@
 #import bpy
 import itertools
-from .plyhandler import ObjectSpec as PlyObject
+#from .plyhandler import ObjectSpec as PlyObject
 import logging
 from .exceptions import InvalidPlyDataForSurfaceobject
 logger = logging.getLogger( __name__ )
 
+# for documentation
+from typings import Iterator
+type_vertex = tuple[float,float,float]
+type_faces = Iterator[int]
+type_surfaceindices = tuple[ int,int,int,int ]
+type_surfacenames = str
+#
 
 def load_ply( filepath, collection, view_layer ):
     """
@@ -28,31 +35,21 @@ def load_ply( filepath, collection, view_layer ):
     return {'FINISHED'}
 
 
-def load_meshdata_from_ply( filepath ):
-    """
-    :todo: use f cr is shitty
-    """
-    plyobj = PlyObject.load_from_file( filepath )
-    try:
-        vertexpositions = plyobj.get_filtered_data("vertex", ("x", "y", "z") )
-        faceindices = plyobj.get_filtered_data( "face", ("vertex_indices",) )
-        faceindices = [ f[0] for f in faceindices ]
-        border = plyobj.get_filtered_data( "cornerrectangle",\
-                                            ("rightup", "leftup", \
-                                            "leftdown", "rightdown") )
-    except KeyError as err:
-        raise InvalidPlyDataForSurfaceobject( "couldnt find all needed "\
-                        "elements and associated properties that are needed" )\
-                        from err
-
-    bordernames = (None,)
-    try:
-        bordernames = plyobj.get_filtered_data("cornerrectangle", ("surfacename",))
-        bordernames = [ "".join(chr(i) for i in name[0]) \
-                        for name in bordernames ]
-    except KeyError:
-        pass
-    return vertexpositions, faceindices, border, bordernames
+def load_meshdata_from_ply( filepath:str ) -> tuple[ Iterator[type_vertex], \
+                            Iterator[type_faces],Iterator[type_surfaceindices],\
+                            Iterator[type_surfacenames]]:
+    asdf = plysurfacehandler.plysurfacehandler.load_from_file( filepath )
+    vertexpositions = asdf.get_vertexpositions()
+    faceindices = asdf.get_faceindices()
+    number_surfaces = asdf.get_numbersurfaces()
+    get_corn = lambda x: tuple(( x.rightup, x.leftup, x.leftdown, x.rightdown ))
+    surfaceindices = [ get_corn( asdf.get_surface(i) )\
+                        for i in range( number_surfaces ) ]
+    surfacenames = [ asdf.get_surface(i).surfacename \
+                        for i in range( number_surfaces ) ]
+    surface_vertexmask = [ asdf.get_surface(i).vertexlist \
+                        for i in range( number_surfaces ) ]
+    return vertexpositions, faceindices, surfaceindices, surfacenames
 
 
 def extract_vertex_positions( blender_obj_info ):

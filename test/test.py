@@ -14,11 +14,11 @@ import unittest
 import importlib.resources
 import tempfile
 import bpy
-plyhandler = importlib.import_module( ".plyhandler", "test_my_io_mesh_ply" )
+plyhandler = importlib.import_module( ".plysurfacehandler.plyhandler", "test_my_io_mesh_ply" )
 PlyObject = plyhandler.ObjectSpec
 testdirectory1 = importlib.import_module( ".test", "test_my_io_mesh_ply" )
 testdirectory2 = importlib.import_module( ".tests", \
-                                        "test_my_io_mesh_ply.plyhandler" )
+                                        "test_my_io_mesh_ply.plysurfacehandler.plyhandler" )
 utils = importlib.import_module( ".utils", "test_my_io_mesh_ply" )
 utils.border_operators = importlib.import_module( ".border_operators", \
                                         "test_my_io_mesh_ply.utils" )

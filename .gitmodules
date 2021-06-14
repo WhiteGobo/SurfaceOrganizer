@@ -1,6 +1,3 @@
-[submodule "myplyhandler"]
-	path = plyhandler
-	url = /home/hfechner/Projects/plyhandler
 [submodule "plysurfacehandler"]
 	path = plysurfacehandler
 	url = /home/hfechner/Projects/plysurfacehandler

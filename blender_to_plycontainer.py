@@ -1,7 +1,6 @@
 import bmesh
 import numpy as np
 #from .plyhandler.get_surfacemap_from_ply import plycontainer_from_arrays, export_plyfile
-from .plyhandler import ObjectSpec as PlyObject
 import itertools as it
 import logging
 logger = logging.getLogger( __name__ )
@@ -39,9 +38,24 @@ def save( blenderobject, filepath, global_matrix, use_ascii ):
         extra["partialsurface_vertices"] = [info[ "Vertexgroup" ] \
                                             for info in infodict_all ]
 
-    save_meshdata_to_ply( filepath, vertices, edges, faces, \
-                            cornerdata, use_ascii, surfacenames = surfacenames,\
-                            **extra )
+
+    vertices = list( vertices )
+    faces = list( faces )
+    from . import plysurfacehandler
+    vertices_asdf = [ plysurfacehandler.vertex( *v ) for v in vertices ]
+    faces_asdf = [ plysurfacehandler.face( f ) for f in faces ]
+    surfaces_asdf = []
+    qqq = { RIGHTUP_CORNER: "rightup", LEFTUP_CORNER: "leftup", \
+            LEFTDOWN_CORNER:"leftdown", RIGHTDOWN_CORNER: "rightdown", \
+            "Name": "surfacename", "Vertexgroup": "vertexlist" }
+    for info in infodict_all:
+        inputdict = { qqq[a]: b for a,b in info.items() if a in qqq }
+        surfaces_asdf.append( plysurfacehandler.surface(**inputdict, \
+                                faceindices=faces ))
+    qwer = plysurfacehandler.plysurfacehandler( vertices_asdf, faces_asdf, surfaces_asdf )
+    qwer.save_to_file( filepath, use_ascii=use_ascii )
+
+
 
 def get_cornerdata( object ):
     extras = dict()
@@ -96,34 +110,6 @@ def get_vertices_of_vertexgroup( object, groupname ):
         for g in v.groups:
             if g.group == groupindex:
                 yield v.index
-
-
-def save_meshdata_to_ply( filepath, vertices, edges, faces, \
-                            cornerdata, use_ascii, surfacenames = (None,), \
-                            used_vertices = (None,), \
-                            partialsurface_vertices=None ):
-    """
-    :todo: str convert seems shit
-    """
-    surfacenames = list( surfacenames ) #[(ru(rightup), lu, ld, rd), ...]
-
-    vertexpipeline = ( ( "float", "x" ), ( "float", "y" ), ( "float","z"))
-    facespipeline = (("list", "uchar", "uint", "vertex_indices" ), )
-    vert = np.array( vertices ).T
-    faces = ( np.array( faces ), )
-
-    partialsurfaceinfo  = _pack_partialsurfaceinfo( surfacenames, cornerdata )
-
-    myobj = PlyObject.from_arrays( [\
-                        ("vertex", vertexpipeline, vert ), \
-                        ("face", facespipeline, faces ), \
-                        #("cornerrectangle", borderpipeline, borderindices ), \
-                        partialsurfaceinfo, \
-                        ])
-
-    #theoreticly "binary_big_endian" is also possible
-    myformat = "ascii" if use_ascii else "binary_little_endian" 
-    myobj.save_to_file( filepath, myformat )
 
 
 def _pack_partialsurfaceinfo( surfacenames, cornerdata ):
