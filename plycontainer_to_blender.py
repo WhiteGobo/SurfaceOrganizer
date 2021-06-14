@@ -78,6 +78,7 @@ def generate_blender_object( meshname, objectname, vertices_list, faces, \
     #context.view_layer.objects.active
     view_layer.objects.active = obj 
     from . import surfacedivide as surfdiv
+    from .utils import surface_functions
     for surfaceinfo in surfaceinfos:
         rightup = surfaceinfo["rightup"]
         leftup = surfaceinfo["leftup"]
@@ -90,6 +91,10 @@ def generate_blender_object( meshname, objectname, vertices_list, faces, \
         surfdiv.assign_leftup_cornerpoint( obj, obj.data.vertices[leftup])
         surfdiv.assign_leftdown_cornerpoint( obj, obj.data.vertices[leftdown])
         surfdiv.assign_rightdown_cornerpoint( obj, obj.data.vertices[rightdown])
+        surfacemaskname = bordername
+        if vertexmask is not None:
+            surface_functions.assign_vertexgroup_to_surface( obj, \
+                                                    surfacemaskname, vertexmask)
 
     obj.select_set(True)
     return obj, mymesh

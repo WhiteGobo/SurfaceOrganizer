@@ -169,9 +169,11 @@ class test_blender_plyimporter( unittest.TestCase ):
         rightup, leftup = m.RIGHTUP_CORNER, m.LEFTUP_CORNER
         leftdown, rightdown = m.LEFTDOWN_CORNER, m.RIGHTDOWN_CORNER
         test = tuple(info for info in get_all_partialsurfaceinfo( obj ))
-        textA = ({'Name': 'surf1', 
+        textA = ({'Name': 'surf1', \
+                'Vertexgroup': (0, 2, 4, 5, 6, 7, 15, 16, 17, 18), \
                 rightup: 2, leftup: 0, leftdown: 15, rightdown: 7}, 
-                {'Name': 'surf2', 
+                {'Name': 'surf2', \
+                'Vertexgroup': (1, 3, 9, 10, 11, 12, 13, 22, 23, 24), \
                 rightup: 13, leftup: 9, leftdown: 1, rightdown: 3})
         self.assertEqual( test, textA )
 
