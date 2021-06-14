@@ -28,12 +28,8 @@ class NewPartialSurface( bpy.types.Operator ):
         _onetime = True
         for surf in surfaces:
             partsurf_name = "vertices_" + partsurf_info.name + "_auto"
-            vgroup = targetobject.vertex_groups.new( name = partsurf_name )
-            #_select_vertices( targetobject, surf )
-            _add_vertices_to_vertexgroup( vgroup, targetobject, surf )
-            if _onetime:
-                _onetime = False
-                partsurf_info.vertexgroup = vgroup.name
+            surface_functions.assign_vertexgroup_to_surface( targetobject, \
+                                                        partsurf_name, surf )
         return {'FINISHED'}
 
         innersurfs = surface_functions.find_possible_partialsurfaces_to_border(\

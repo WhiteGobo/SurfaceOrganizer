@@ -4,6 +4,8 @@ import itertools
 import logging
 logger = logging.getLogger( __name__ )
 
+from typing import Iterable
+
 def find_partialsurface_to_border( targetobject, border_indexlist ):
     all_faces_indiceslist = _get_faces_as_indextuples( targetobject )
     new_faces_indiceslist, new_to_all = _split_surface_at_border( \
@@ -22,6 +24,32 @@ def find_partialsurface_to_border( targetobject, border_indexlist ):
             old_vertlist = [ new_to_all.get( v, v ) for v in vertlist ]
             found_surfaces.append( old_vertlist )
     return found_surfaces
+
+def assign_vertexgroup_to_surface( targetobject, surfacename:str, \
+                                                    surf:Iterable[int] ):
+    allinfo = targetobject.partial_surface_information
+    index = allinfo.active_surface_index 
+    partsurf_info = allinfo.partial_surface_info[ index ]
+
+    partsurf_name = "vertices_" + partsurf_info.name + "_auto"
+    vgroup = targetobject.vertex_groups.new( name = surfacename )
+    #_select_vertices( targetobject, surf )
+    _add_vertices_to_vertexgroup( vgroup, targetobject, surf )
+    partsurf_info.vertexgroup = vgroup.name
+
+def _add_vertices_to_vertexgroup( vertexgroup, targetobject, vertice_indices ):
+    import bpy
+    mode = targetobject.mode
+    bpy.ops.object.mode_set( mode='OBJECT' )
+    assert targetobject.mode == 'OBJECT', "couldnt set objectmode, " \
+                    "maybe c...active_object != c...view_layer.objects.active"
+    weight, add_type = 1, "REPLACE"
+    #vertexgroup = obj.vertex_groups.new( name=vertexgroupname )
+    for i in vertice_indices:
+        vertexgroup.add( [i], weight, add_type )
+    #throws error if 0 in sequence as first place
+    #vertexgroup.add( set(vertice_indices), weight, add_type )
+    bpy.ops.object.mode_set( mode=mode )
 
 def _filter_facelist( faces_indiceslist, vertlist ):
     for face in faces_indiceslist:
