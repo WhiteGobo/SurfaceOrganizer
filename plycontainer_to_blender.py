@@ -1,12 +1,13 @@
-import bpy.path
-import bpy.data
+import bpy
+#import bpy.data
 import itertools
 import logging
 from .exceptions import InvalidPlyDataForSurfaceobject
 logger = logging.getLogger( __name__ )
+from . import plysurfacehandler
 
 # for documentation
-from typings import Iterator
+from typing import Iterator
 type_vertex = tuple[float,float,float]
 type_faces = Iterator[int]
 type_surfaceindices = tuple[ int,int,int,int ]
@@ -23,9 +24,10 @@ def load_ply( filepath, collection, view_layer ):
     objectname = ply_name
 
     vertexlist, faces, borders, bordernames = load_meshdata_from_ply( filepath )
+    #raise Exception( vertexlist, faces, borders, bordernames)
 
-    generate_blender_object( meshname, objectname, vertexlist, faces, \
-                                        borders, bordernames, \
+    generate_blender_object( meshname, objectname, list( vertexlist), \
+                                        list(faces), borders, bordernames, \
                                         collection, view_layer )
     return {'FINISHED'}
 
@@ -36,8 +38,21 @@ def load_meshdata_from_ply( filepath:str ) -> tuple[ Iterator[type_vertex], \
     asdf = plysurfacehandler.plysurfacehandler.load_from_file( filepath )
     vertexpositions = asdf.get_vertexpositions()
     faceindices = asdf.get_faceindices()
-    number_surfaces = asdf.get_numbersurfaces()
+    number_surfaces = asdf.get_number_surfaces()
     get_corn = lambda x: tuple(( x.rightup, x.leftup, x.leftdown, x.rightdown ))
+    surfaceinfo = []
+    for i in range( number_surfaces ):
+        surf = asdf.get_surface(i)
+        tmpinfo = {\
+                "rightup": surf.rightup, \
+                "leftup": surf.leftup, \
+                "leftdown": surf.leftdown, \
+                "rightdown": surf.rightdown, \
+                "name": surf.surfacename, \
+                "vertexmask": surf.vertexlist, \
+                }
+        surfaceinfo.append({ a:b for a,b in tmpinfo.items() if b is not None })
+
     surfaceindices = [ get_corn( asdf.get_surface(i) )\
                         for i in range( number_surfaces ) ]
     surfacenames = [ asdf.get_surface(i).surfacename \

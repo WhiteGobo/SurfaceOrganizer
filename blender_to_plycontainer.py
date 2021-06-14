@@ -34,16 +34,16 @@ def save( blenderobject, filepath, global_matrix, use_ascii ):
                                             blenderobject, global_matrix )
     infodict_all = get_all_partialsurfaceinfo( blenderobject )
 
-    surfaces_info = [{ infodict_to_plysurfaceshandler[ a ]:b \
+    surfaces_info = [ { infodict_to_plysurfaceshandler[ a ]:b \
                         for a, b in infodict.items() \
                         if a in infodict_to_plysurfaceshandler.keys() }
                         for infodict in infodict_all ]
     save_data( filepath, vertices, faces, surfaces_info, use_ascii )
 
 
-
-def save_data( filepath, vertices, faces, surfaces_info:Iterator[dict], \
-                                                                use_ascii ):
+def save_data( filepath:str, vertices: Iterator[tuple[float,float,float]], \
+                                    faces: Iterator[Iterator[int]], \
+                                    surfaces_info: Iterator[dict], use_ascii ):
     vertices = list( vertices )
     faces = list( faces )
     vertices_asdf = [ plysurfacehandler.vertex( *v ) for v in vertices ]

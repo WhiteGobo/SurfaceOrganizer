@@ -104,11 +104,9 @@ class test_blender_plyimporter( unittest.TestCase ):
 
 
     def test_load_ascii( self ):
-        return
-        #scene = bpy.data.scenes["TestLoadSurface"]
+        scene = bpy.data.scenes["TestLoadSurface"]
         #scene = bpy.data.scenes[ "TestSurfaceOperators" ]
-        #override = { "scene": scene }
-        override = {}
+        override = { "scene": scene }
         with importlib.resources.path( testdirectory2, "tmp.ply" ) as filepath:
             bpy.ops.import_mesh.ply_with_border( override, files=[{"name":str(filepath)}])
 
@@ -122,7 +120,6 @@ class test_blender_plyimporter( unittest.TestCase ):
                                                 use_selection = True )
 
     def test_save_ascii( self ):
-        return
         newobj = bpy.data.objects[ "PreparedWithBorderCube" ] 
         scene = bpy.data.scenes[ "Scene" ]
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -133,7 +130,6 @@ class test_blender_plyimporter( unittest.TestCase ):
                                                 use_selection = True )
 
     def test_save_ascii_multiplesurfaces( self ):
-        return
         newobj = bpy.data.objects["PreparedWithMultipleSurfaces"] 
         scene = bpy.data.scenes["test_save_ascii_multiplesurfaces"]
         override = { "selected_objects":[newobj] }
@@ -150,7 +146,7 @@ class test_blender_plyimporter( unittest.TestCase ):
 
             asd = plyobj.get_filtered_data( "cornerrectangle", \
                             ("rightup", "leftup", "leftdown", "rightdown"))
-            self.assertEqual( tuple( asd ), ((2, 0, 15, 7), (13, 9, 3, 1)))
+            self.assertEqual( tuple( asd ), ((2, 0, 15, 7), (13, 9, 1,3)))
 
             asd = plyobj.get_dataarray( "cornerrectangle", "surfacename" )
             mysurfnames = [ str( bytes(single), encoding="utf8" ) \
@@ -158,9 +154,7 @@ class test_blender_plyimporter( unittest.TestCase ):
             self.assertEqual( tuple(mysurfnames), ("surf1", "surf2") )
 
 
-
     def test_load_ascii_multiplesurfaces( self ):
-        return
         scene = bpy.data.scenes["test_load_ascii_multiplesurfaces"]
         override = { "scene": scene }
         with importlib.resources.path( testdirectory1, "multiplesurface.ply" ) \
