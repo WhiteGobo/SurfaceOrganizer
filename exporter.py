@@ -92,7 +92,7 @@ class MyExportPLY(bpy.types.Operator, ExportHelper):
         ).to_4x4() @ Matrix.Scale(self.global_scale, 4)
         keywords["global_matrix"] = global_matrix
 
-        keywords["object"] = list(context.selected_objects)[0]
+        keywords["blenderobject"] = list(context.selected_objects)[0]
 
         import time
         t = time.time()
