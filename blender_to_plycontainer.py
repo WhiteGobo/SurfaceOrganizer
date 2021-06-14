@@ -4,6 +4,7 @@ import numpy as np
 import itertools as it
 import logging
 logger = logging.getLogger( __name__ )
+from . import plysurfacehandler
 
 # for documentation:
 from typing import Iterator
@@ -13,8 +14,14 @@ _faces = Iterator[list[int]]
 
 #mainpart
 
+from .surfacedivide import RIGHTUP_CORNER, LEFTUP_CORNER, \
+                                LEFTDOWN_CORNER, RIGHTDOWN_CORNER
 RIGHTUP, LEFTUP, LEFTDOWN, RIGHTDOWN \
             = "rightup", "leftup", "leftdown", "rightdown"
+infodict_to_plysurfaceshandler = { RIGHTUP_CORNER: "rightup", \
+            LEFTUP_CORNER: "leftup", \
+            LEFTDOWN_CORNER:"leftdown", RIGHTDOWN_CORNER: "rightdown", \
+            "Name": "surfacename", "Vertexgroup": "vertexlist" }
 
 from .exceptions import SurfaceNotCorrectInitiated
 
@@ -38,23 +45,28 @@ def save( blenderobject, filepath, global_matrix, use_ascii ):
         extra["partialsurface_vertices"] = [info[ "Vertexgroup" ] \
                                             for info in infodict_all ]
 
+    surfaces_info = [{ infodict_to_plysurfaceshandler[ a ]:b \
+                        for a, b in infodict.items() \
+                        if a in infodict_to_plysurfaceshandler.keys() }
+                        for infodict in infodict_all ]
+    save_data( filepath, vertices, faces, surfaces_info, use_ascii )
 
+
+
+def save_data( filepath, vertices, faces, surfaces_info:Iterator[dict], \
+                                                                use_ascii ):
     vertices = list( vertices )
     faces = list( faces )
-    from . import plysurfacehandler
     vertices_asdf = [ plysurfacehandler.vertex( *v ) for v in vertices ]
     faces_asdf = [ plysurfacehandler.face( f ) for f in faces ]
     surfaces_asdf = []
-    qqq = { RIGHTUP_CORNER: "rightup", LEFTUP_CORNER: "leftup", \
-            LEFTDOWN_CORNER:"leftdown", RIGHTDOWN_CORNER: "rightdown", \
-            "Name": "surfacename", "Vertexgroup": "vertexlist" }
-    for info in infodict_all:
-        inputdict = { qqq[a]: b for a,b in info.items() if a in qqq }
-        surfaces_asdf.append( plysurfacehandler.surface(**inputdict, \
+    #qqq = infodict_to_plysurfacehandler
+    for info in surfaces_info:
+        #inputdict = { qqq[a]: b for a,b in info.items() if a in qqq }
+        surfaces_asdf.append( plysurfacehandler.surface( **info, \
                                 faceindices=faces ))
     qwer = plysurfacehandler.plysurfacehandler( vertices_asdf, faces_asdf, surfaces_asdf )
     qwer.save_to_file( filepath, use_ascii=use_ascii )
-
 
 
 def get_cornerdata( object ):
