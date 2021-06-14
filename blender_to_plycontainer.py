@@ -6,19 +6,27 @@ import itertools as it
 import logging
 logger = logging.getLogger( __name__ )
 
+# for documentation:
+from typing import Iterator
+_vertices = Iterator[tuple[float,float,float]]
+_edges = Iterator[tuple[int,int]]
+_faces = Iterator[list[int]]
+
+#mainpart
+
 RIGHTUP, LEFTUP, LEFTDOWN, RIGHTDOWN \
             = "rightup", "leftup", "leftdown", "rightdown"
 
-class SurfaceNotCorrectInitiated( Exception ):
-    pass
+from .exceptions import SurfaceNotCorrectInitiated
 
-def save( object, filepath, global_matrix, use_ascii ):
-    vertices, edges, faces = get_vertices_edges_faces_from_blenderobject( \
-                                            object, global_matrix )
+def save( blenderobject, filepath, global_matrix, use_ascii ):
     from .custom_properties import get_all_partialsurfaceinfo
     from .surfacedivide import RIGHTUP_CORNER, LEFTUP_CORNER, \
                                 LEFTDOWN_CORNER, RIGHTDOWN_CORNER
-    infodict_all = get_all_partialsurfaceinfo( object )
+
+    vertices, edges, faces = get_vertices_edges_faces_from_blenderobject( \
+                                            blenderobject, global_matrix )
+    infodict_all = get_all_partialsurfaceinfo( blenderobject )
     infodict_all = list( infodict_all )
     cornlist =(RIGHTUP_CORNER, LEFTUP_CORNER, LEFTDOWN_CORNER,RIGHTDOWN_CORNER)
     cornerdata = tuple( \
@@ -104,9 +112,6 @@ def save_meshdata_to_ply( filepath, vertices, edges, faces, \
     vert = np.array( vertices ).T
     faces = ( np.array( faces ), )
 
-    #if partialsurface_vertices is not None:
-    #    raise Exception(partialsurface_vertices )
-    #rightup, leftup, leftdown, rightdown = cornerdata
     partialsurfaceinfo  = _pack_partialsurfaceinfo( surfacenames, cornerdata )
 
     myobj = PlyObject.from_arrays( [\
@@ -133,7 +138,8 @@ def _pack_partialsurfaceinfo( surfacenames, cornerdata ):
     return ("cornerrectangle", tuple(borderpipeline), tuple(borderindices) )
 
 
-def get_vertices_edges_faces_from_blenderobject( blender_object, global_matrix):
+def get_vertices_edges_faces_from_blenderobject( blender_object, \
+                        global_matrix) -> tuple[_vertices,_edges,_faces]:
     """
     :todo: use of global_matrix
     """
