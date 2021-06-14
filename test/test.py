@@ -170,9 +170,9 @@ class test_blender_plyimporter( unittest.TestCase ):
         leftdown, rightdown = m.LEFTDOWN_CORNER, m.RIGHTDOWN_CORNER
         test = tuple(info for info in get_all_partialsurfaceinfo( obj ))
         textA = ({'Name': 'surf1', 
-                rightup: 7, leftup: 0, leftdown: 2, rightdown: 15}, 
+                rightup: 2, leftup: 0, leftdown: 15, rightdown: 7}, 
                 {'Name': 'surf2', 
-                rightup: 9, leftup: 13, leftdown: 3, rightdown: 1})
+                rightup: 13, leftup: 9, leftdown: 1, rightdown: 3})
         self.assertEqual( test, textA )
 
     

@@ -10,8 +10,7 @@ from . import plysurfacehandler
 from typing import Iterator
 type_vertex = tuple[float,float,float]
 type_faces = Iterator[int]
-type_surfaceindices = tuple[ int,int,int,int ]
-type_surfacenames = str
+type_surfacedata = dict
 #
 
 def load_ply( filepath, collection, view_layer ):
@@ -23,18 +22,18 @@ def load_ply( filepath, collection, view_layer ):
     meshname = ply_name
     objectname = ply_name
 
-    vertexlist, faces, borders, bordernames = load_meshdata_from_ply( filepath )
-    #raise Exception( vertexlist, faces, borders, bordernames)
+    vertexlist, faces, surfaceinfo_all = load_meshdata_from_ply( filepath )
 
     generate_blender_object( meshname, objectname, list( vertexlist), \
-                                        list(faces), borders, bordernames, \
+                                        list(faces), \
+                                        surfaceinfo_all, \
                                         collection, view_layer )
     return {'FINISHED'}
 
 
 def load_meshdata_from_ply( filepath:str ) -> tuple[ Iterator[type_vertex], \
-                            Iterator[type_faces],Iterator[type_surfaceindices],\
-                            Iterator[type_surfacenames]]:
+                            Iterator[type_faces],\
+                            Iterator[type_surfacedata]]:
     asdf = plysurfacehandler.plysurfacehandler.load_from_file( filepath )
     vertexpositions = asdf.get_vertexpositions()
     faceindices = asdf.get_faceindices()
@@ -53,13 +52,7 @@ def load_meshdata_from_ply( filepath:str ) -> tuple[ Iterator[type_vertex], \
                 }
         surfaceinfo.append({ a:b for a,b in tmpinfo.items() if b is not None })
 
-    surfaceindices = [ get_corn( asdf.get_surface(i) )\
-                        for i in range( number_surfaces ) ]
-    surfacenames = [ asdf.get_surface(i).surfacename \
-                        for i in range( number_surfaces ) ]
-    surface_vertexmask = [ asdf.get_surface(i).vertexlist \
-                        for i in range( number_surfaces ) ]
-    return vertexpositions, faceindices, surfaceindices, surfacenames
+    return vertexpositions, faceindices, surfaceinfo
 
 
 def extract_vertex_positions( blender_obj_info ):
@@ -69,7 +62,7 @@ def extract_vertex_positions( blender_obj_info ):
 
 
 def generate_blender_object( meshname, objectname, vertices_list, faces, \
-                                        borders, bordernames, \
+                                        surfaceinfos, \
                                         collection, view_layer ):
     """
     :todo: setting view_layer.objects.active seems to have strange interactions
@@ -85,9 +78,14 @@ def generate_blender_object( meshname, objectname, vertices_list, faces, \
     #context.view_layer.objects.active
     view_layer.objects.active = obj 
     from . import surfacedivide as surfdiv
-    for border, bordername in itertools.zip_longest(borders, bordernames):
+    for surfaceinfo in surfaceinfos:
+        rightup = surfaceinfo["rightup"]
+        leftup = surfaceinfo["leftup"]
+        leftdown = surfaceinfo["leftdown"]
+        rightdown = surfaceinfo["rightdown"]
+        bordername = surfaceinfo.get( "name", None )
+        vertexmask = surfaceinfo.get( "vertexmask", None )
         surfdiv.add_new_partial_surface( obj, bordername )
-        rightup, leftup, leftdown, rightdown = border
         surfdiv.assign_rightup_cornerpoint( obj, obj.data.vertices[rightup] )
         surfdiv.assign_leftup_cornerpoint( obj, obj.data.vertices[leftup])
         surfdiv.assign_leftdown_cornerpoint( obj, obj.data.vertices[leftdown])
