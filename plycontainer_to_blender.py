@@ -91,7 +91,7 @@ def generate_blender_object( meshname, objectname, vertices_list, faces, \
         surfdiv.assign_leftup_cornerpoint( obj, obj.data.vertices[leftup])
         surfdiv.assign_leftdown_cornerpoint( obj, obj.data.vertices[leftdown])
         surfdiv.assign_rightdown_cornerpoint( obj, obj.data.vertices[rightdown])
-        surfacemaskname = bordername
+        surfacemaskname = bordername if bordername is not None else ""
         if vertexmask is not None:
             surface_functions.assign_vertexgroup_to_surface( obj, \
                                                     surfacemaskname, vertexmask)
